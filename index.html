@@ -1,1892 +1,1611 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂出遊・伴手禮團購登記站</title>
-    <!-- 引入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Google Fonts Noto Sans TC 確保繁體中文清晰易讀 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- 引入 FontAwesome 圖示 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #F8FAFC;
-            color: #1E293B;
-            touch-action: manipulation;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F1F5F9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #CBD5E1;
-            border-radius: 4px;
-        }
-        .btn-press:active {
-            transform: scale(0.96);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>伴手禮團購登記站</title>
+  <style>
+    :root {
+      --bg-page: #f1f5f9;
+      --bg-header: #18202c;
+      --bg-card: #ffffff;
+      --primary: #f59e0b;
+      --primary-dark: #d97706;
+      --primary-text: #111827;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --info: #2563eb;
+      --text-main: #0f172a;
+      --text-sub: #334155;
+      --border-color: #cbd5e1;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-size: 21px; /* 全面放大基準字體，對齊標題大小 */
+      line-height: 1.45;
+      padding-bottom: 130px;
+    }
+
+    /* 頂部導覽列：減少留白、字體放大 */
+    header {
+      background-color: var(--bg-header);
+      color: #ffffff;
+      padding: 12px 10px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .app-title {
+      font-size: 23px;
+      font-weight: 900;
+      color: #fbbf24;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .badge-btn {
+      flex: 1;
+      min-width: 145px;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.1s;
+    }
+
+    .badge-btn:active {
+      transform: scale(0.97);
+    }
+
+    .badge-lock {
+      background-color: #475569;
+      color: #ffffff;
+    }
+
+    .badge-unlock {
+      background-color: var(--primary);
+      color: var(--primary-text);
+    }
+
+    .badge-open {
+      background-color: var(--success);
+      color: #ffffff;
+    }
+
+    .badge-closed {
+      background-color: var(--danger);
+      color: #ffffff;
+    }
+
+    /* 三大分頁：不折行、大字體、好點擊 */
+    .nav-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background-color: #252f3f;
+      padding: 6px;
+      border-radius: var(--radius-md);
+    }
+
+    .nav-tab {
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 19px;
+      font-weight: 800;
+      padding: 12px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .nav-tab.active {
+      background-color: var(--primary);
+      color: var(--primary-text);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .count-pill {
+      background-color: var(--danger);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 900;
+      padding: 1px 8px;
+      border-radius: 999px;
+      margin-left: 2px;
+    }
+
+    /* 主內容區：極小左右留白，最大化手機顯示面積 */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 10px 8px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* 卡片樣式 */
+    .card {
+      background-color: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 16px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      border: 2px solid #e2e8f0;
+    }
+
+    .card-title {
+      font-size: 23px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 10px;
+    }
+
+    /* 表單元素：超大字體與大點擊區 */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .form-sub {
+      font-size: 19px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      width: 100%;
+      min-height: 60px;
+      padding: 12px 14px;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      background-color: #f8fafc;
+      border: 2.5px solid #94a3b8;
+      border-radius: var(--radius-md);
+      outline: none;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--info);
+      background-color: #ffffff;
+    }
+
+    /* 按鈕樣式 */
+    .btn {
+      width: 100%;
+      min-height: 58px;
+      padding: 12px 16px;
+      font-size: 21px;
+      font-weight: 900;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--primary-text);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #ffffff;
+    }
+
+    .btn-info {
+      background-color: var(--info);
+      color: #ffffff;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-outline {
+      background-color: #ffffff;
+      color: var(--text-main);
+      border: 2.5px solid #94a3b8;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* 匯率提示框 */
+    .rate-box {
+      background-color: #ecfdf5;
+      border: 2px solid #6ee7b7;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #065f46;
+      margin-top: 10px;
+    }
+
+    .rate-status {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--info);
+      margin-top: 6px;
+    }
+
+    /* 團員商品卡片 */
+    .product-card {
+      background-color: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 2px solid #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .product-top {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .product-media {
+      width: 84px;
+      height: 84px;
+      border-radius: 14px;
+      background-color: #fef3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 46px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid #fde68a;
+      cursor: pointer;
+    }
+
+    .product-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .product-name {
+      font-size: 23px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .product-desc {
+      font-size: 19px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+
+    .promo-tag {
+      display: inline-block;
+      background-color: #fee2e2;
+      color: #b91c1c;
+      font-size: 19px;
+      font-weight: 900;
+      padding: 3px 10px;
+      border-radius: 8px;
+    }
+
+    .product-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 2px dashed #e2e8f0;
+    }
+
+    .price-tag {
+      font-size: 23px;
+      font-weight: 900;
+      color: #b45309;
+    }
+
+    .price-twd {
+      font-size: 19px;
+      font-weight: 700;
+      color: #047857;
+    }
+
+    /* 超大加減按鈕 */
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: none;
+      font-size: 30px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-minus {
+      background-color: #e2e8f0;
+      color: var(--text-main);
+    }
+
+    .qty-plus {
+      background-color: var(--primary);
+      color: var(--primary-text);
+    }
+
+    .qty-num {
+      min-width: 44px;
+      text-align: center;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    /* 底部結帳欄 */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #18202c;
+      color: #ffffff;
+      padding: 12px 10px;
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.25);
+      z-index: 90;
+    }
+
+    .bottom-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .total-info {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .total-amount {
+      font-size: 24px;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+
+    /* 導遊訂單項目 */
+    .order-item {
+      border: 2px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 12px;
+      background-color: #f8fafc;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .order-buyer {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    /* 彈窗 Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 999;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      border-radius: var(--radius-lg);
+      padding: 20px 16px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      font-size: 21px;
+      margin-bottom: 18px;
+      color: var(--text-sub);
+    }
+
+    /* Toast 提示 */
+    .toast {
+      position: fixed;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-size: 20px;
+      font-weight: 800;
+      z-index: 1200;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .icon-choice {
+      font-size: 30px;
+      padding: 8px;
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .icon-choice.selected {
+      border-color: var(--primary-dark);
+      background-color: #fef3c7;
+    }
+  </style>
 </head>
-<body class="pb-32">
+<body>
 
-    <!-- 頂部導覽列：三大功能分頁切換 -->
-    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg">
-        <div class="max-w-3xl mx-auto px-3 py-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">🚌</span>
-                    <h1 class="text-lg sm:text-2xl font-black tracking-wide text-amber-400">伴手禮團購登記站</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <!-- 導遊解鎖狀態按鈕（解鎖後顯示，點擊可立即上鎖） -->
-                    <button id="guideLockStatusBtn" onclick="lockGuideSession(true)" class="hidden btn-press px-3 py-1 rounded-full text-xs sm:text-sm font-black bg-amber-500 text-slate-900 shadow flex items-center gap-1.5">
-                        <i class="fa-solid fa-lock-open"></i> 導遊已解鎖 (點此上鎖)
-                    </button>
-                    <!-- 截單狀態徽章 -->
-                    <span id="headerStatusBadge" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500 text-white">
-                        🟢 開放登記中
-                    </span>
-                </div>
-            </div>
-            
-            <!-- 三模式切換按鈕 -->
-            <div class="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-800 p-1.5 rounded-2xl">
-                <button id="tabMember" onclick="requestSwitchTab('member')" 
-                    class="btn-press py-2.5 sm:py-3 px-2 rounded-xl text-base sm:text-lg font-black transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-900 shadow-md">
-                    <i class="fa-solid fa-cart-shopping"></i> <span>團員點單</span>
-                </button>
-                <button id="tabGuide" onclick="requestSwitchTab('guide')" 
-                    class="btn-press py-2.5 sm:py-3 px-2 rounded-xl text-base sm:text-lg font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-                    <i class="fa-solid fa-clipboard-list"></i> <span>導遊總表</span>
-                    <span id="orderCountBadge" class="bg-rose-500 text-white text-xs sm:text-sm px-2 py-0.5 rounded-full">0</span>
-                </button>
-                <button id="tabSettings" onclick="requestSwitchTab('settings')" 
-                    class="btn-press py-2.5 sm:py-3 px-2 rounded-xl text-base sm:text-lg font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-                    <i class="fa-solid fa-gear"></i> <span>商品設定</span>
-                </button>
-            </div>
+  <!-- 頂部導覽區 -->
+  <header>
+    <div class="header-top">
+      <div class="app-title">🚌 伴手禮團購登記站</div>
+    </div>
+
+    <div class="status-row">
+      <button id="lockBadgeBtn" class="badge-btn badge-lock" onclick="handleLockBadgeClick()">
+        🔒 導遊管理已上鎖
+      </button>
+      <button id="orderLockBtn" class="badge-btn badge-open" onclick="toggleOrderLock()">
+        🟢 開放團員登記中
+      </button>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" id="tab-member" onclick="switchTab('member')">
+        🛒 團員點單
+      </button>
+      <button class="nav-tab" id="tab-guide" onclick="switchTab('guide')">
+        📋 總表 <span class="count-pill" id="orderCountBadge">0</span>
+      </button>
+      <button class="nav-tab" id="tab-settings" onclick="switchTab('settings')">
+        ⚙️ 設定
+      </button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- ==================== 1. 團員點單分頁 ==================== -->
+    <section id="sec-member" class="section active">
+      <div id="closedBanner" class="card" style="display:none; background:#fef2f2; border-color:#ef4444;">
+        <div style="font-size:23px; font-weight:900; color:#b91c1c;">
+          ⛔ 本團已結單鎖定！如需加購請直接告知導遊。
         </div>
-    </header>
+      </div>
 
-    <!-- 主內容區 -->
-    <main class="max-w-3xl mx-auto px-4 pt-5">
+      <div class="card">
+        <div class="card-title">👤 填寫基本資料（方便發貨）</div>
+        <div class="btn-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">姓名 / 暱稱</label>
+            <input type="text" id="buyerName" placeholder="例如：陳大哥" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">座位號碼</label>
+            <input type="text" id="buyerSeat" placeholder="例如：5A" />
+          </div>
+        </div>
+      </div>
 
-        <!-- ========================================== -->
-        <!-- 畫面一：團員點單區                         -->
-        <!-- ========================================== -->
-        <section id="viewMember" class="space-y-6">
-            
-            <!-- 截單鎖定警告橫幅 -->
-            <div id="closedWarningBanner" class="hidden bg-rose-100 border-2 border-rose-500 text-rose-900 p-5 rounded-2xl shadow-md">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-lock text-3xl text-rose-600"></i>
-                    <div>
-                        <h2 class="text-xl font-black">本團已停止線上收單囉！</h2>
-                        <p class="text-lg mt-1">導遊已經向廠商下單了，如需臨時加購，請直接舉手洽詢導遊喔！</p>
-                    </div>
-                </div>
-            </div>
+      <div id="memberProductList"></div>
 
-            <!-- 步驟 1：身分與座位登記 -->
-            <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border-2 border-slate-200">
-                <div class="flex items-center gap-2 mb-4">
-                    <span class="bg-amber-500 text-slate-900 font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">1</span>
-                    <h2 class="text-xl sm:text-2xl font-black text-slate-800">請輸入您的座位與大名</h2>
-                </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="seatInput" class="block text-lg font-bold text-slate-700 mb-1.5">
-                            💺 座位號碼 <span class="text-rose-600">*</span>
-                        </label>
-                        <input type="text" id="seatInput" placeholder="例如：3A 或 5號" 
-                            class="w-full text-xl p-4 border-2 border-slate-300 rounded-2xl focus:border-amber-500 focus:outline-none bg-slate-50 font-bold text-slate-900">
-                    </div>
-                    <div>
-                        <label for="nameInput" class="block text-lg font-bold text-slate-700 mb-1.5">
-                            😊 姓名 / 暱稱 <span class="text-rose-600">*</span>
-                        </label>
-                        <input type="text" id="nameInput" placeholder="例如：陳大哥、王美玲" 
-                            class="w-full text-xl p-4 border-2 border-slate-300 rounded-2xl focus:border-amber-500 focus:outline-none bg-slate-50 font-bold text-slate-900">
-                    </div>
-                </div>
-            </div>
+      <div style="margin-top: 10px;">
+        <button class="btn btn-outline" onclick="confirmResetCart()">
+          🔄 數量全部歸零
+        </button>
+      </div>
+    </section>
 
-            <!-- 步驟 2：挑選土產伴手禮 -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-1">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-amber-500 text-slate-900 font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">2</span>
-                        <h2 class="text-xl sm:text-2xl font-black text-slate-800">點選想買的土產數量</h2>
-                    </div>
-                    <button type="button" onclick="confirmResetCurrentCart()" class="btn-press bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-2 rounded-xl text-base font-black flex items-center gap-1.5">
-                        <i class="fa-solid fa-rotate-left"></i> 全部歸零
-                    </button>
-                </div>
+    <!-- ==================== 2. 導遊總表分頁 ==================== -->
+    <section id="sec-guide" class="section">
+      <div class="card">
+        <div class="card-title">📦 全車叫貨統計總表</div>
+        <div id="summaryList" style="font-size:22px;"></div>
+        <div style="margin-top:14px;" class="btn-row">
+          <button class="btn btn-success" onclick="copySummaryToClipboard()">
+            📋 複製 LINE 統計
+          </button>
+          <button class="btn btn-danger" onclick="confirmClearAllOrders()">
+            🗑️ 清空所有訂單
+          </button>
+        </div>
+      </div>
 
-                <!-- 商品卡片容器 -->
-                <div id="productListContainer" class="space-y-4"></div>
-            </div>
-        </section>
+      <div class="card">
+        <div class="card-title">🧾 團員個別帳單與收款</div>
+        <div id="orderList"></div>
+      </div>
+    </section>
 
-        <!-- ========================================== -->
-        <!-- 畫面二：導遊總控台 (受密碼保護)            -->
-        <!-- ========================================== -->
-        <section id="viewGuide" class="hidden space-y-6">
-            
-            <!-- 導遊快捷操作列 -->
-            <div class="bg-white p-5 rounded-3xl shadow-sm border-2 border-slate-200 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                    <div>
-                        <h2 class="text-xl font-black text-slate-800">收單狀態控制</h2>
-                        <p class="text-base text-slate-600">向店家叫貨前，可鎖定防止團員繼續修改</p>
-                    </div>
-                    <button id="toggleOrderLockBtn" onclick="toggleOrderLock()" 
-                        class="btn-press py-3.5 px-6 rounded-2xl text-lg font-black text-white bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-unlock"></i> 目前：開放點單中 (點擊截單)
-                    </button>
-                </div>
+    <!-- ==================== 3. 導遊商品與匯率設定分頁 ==================== -->
+    <section id="sec-settings" class="section">
+      <!-- 即時網路匯率設定 -->
+      <div class="card">
+        <div class="card-title">🪙 幣別與最新台幣匯率換算</div>
+        <div class="form-group">
+          <label class="form-label">計價貨幣符號</label>
+          <select id="currencySelect" onchange="onCurrencyChange()">
+            <option value="TWD|NT$">NT$ (新台幣 TWD)</option>
+            <option value="JPY|¥">¥ (日幣 JPY)</option>
+            <option value="USD|$">$ (美金 USD)</option>
+            <option value="KRW|₩">₩ (韓元 KRW)</option>
+            <option value="THB|฿">฿ (泰銖 THB)</option>
+            <option value="EUR|€">€ (歐元 EUR)</option>
+            <option value="VND|₫">₫ (越南盾 VND)</option>
+          </select>
+        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button onclick="copyLineSummary()" 
-                        class="btn-press py-4 px-5 rounded-2xl text-lg font-black text-white bg-[#06C755] hover:bg-[#05b34c] shadow-md flex items-center justify-center gap-2">
-                        <i class="fa-brands fa-line text-2xl"></i> 複製 LINE 對帳單
-                    </button>
-                    <button onclick="promptClearAllOrders()" 
-                        class="btn-press py-4 px-5 rounded-2xl text-lg font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash-can"></i> 清空所有訂單
-                    </button>
-                </div>
-            </div>
-
-            <!-- 數據總覽 4 大卡片 -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <div class="text-base font-bold text-slate-500">已登記組數</div>
-                    <div class="text-2xl sm:text-3xl font-black text-slate-800 mt-1"><span id="statPeople">0</span> 組</div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <div class="text-base font-bold text-slate-500">全車總件數</div>
-                    <div class="text-2xl sm:text-3xl font-black text-amber-600 mt-1"><span id="statItems">0</span> 件</div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <div class="text-base font-bold text-slate-500">應收總金額</div>
-                    <div class="text-xl sm:text-2xl font-black text-slate-900 mt-1"><span class="currency-symbol">NT$</span> <span id="statTotalAmount">0</span></div>
-                </div>
-                <div class="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-300 shadow-sm">
-                    <div class="text-base font-bold text-emerald-700">已收款金額</div>
-                    <div class="text-xl sm:text-2xl font-black text-emerald-700 mt-1"><span class="currency-symbol">NT$</span> <span id="statPaidAmount">0</span></div>
-                </div>
-            </div>
-
-            <!-- 區塊 A：向廠商叫貨總表 -->
-            <div class="bg-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-md">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl sm:text-2xl font-black text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-boxes-stacked"></i> 向廠商叫貨總表
-                    </h2>
-                    <span class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300">自動加總全車數量</span>
-                </div>
-                <div id="vendorSummaryContainer" class="divide-y divide-slate-700"></div>
-            </div>
-
-            <!-- 區塊 B：團員個人帳單與收款管理 -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-1">
-                    <h2 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-users"></i> 團員帳單與收款明細
-                    </h2>
-                    <span class="text-base font-bold text-slate-500">依座位順序排列</span>
-                </div>
-                <div id="memberOrdersContainer" class="space-y-4"></div>
-            </div>
-
-        </section>
-
-        <!-- ========================================== -->
-        <!-- 畫面三：導遊商品設定後台 (受密碼保護)      -->
-        <!-- ========================================== -->
-        <section id="viewSettings" class="hidden space-y-6">
-
-            <!-- 卡片 1：一鍵套用旅遊路線範本 -->
-            <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border-2 border-slate-200 space-y-4">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot text-amber-500"></i> 旅遊路線範本一鍵切換
-                    </h2>
-                    <p class="text-base text-slate-600 mt-1">帶不同路線時，點一下即可快速替換整車土產清單與幣別！</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <button onclick="promptApplyTemplate('taiwan')" class="btn-press p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 text-left transition-all">
-                        <div class="text-2xl mb-1">🇹🇼</div>
-                        <div class="text-lg font-black text-slate-900">台灣經典伴手禮</div>
-                        <div class="text-sm text-slate-600">鳳梨酥、高山茶、沙琪瑪</div>
-                    </button>
-                    <button onclick="promptApplyTemplate('japan')" class="btn-press p-4 rounded-2xl border-2 border-rose-300 bg-rose-50 hover:bg-rose-100 text-left transition-all">
-                        <div class="text-2xl mb-1">🇯🇵</div>
-                        <div class="text-lg font-black text-slate-900">日本人氣藥妝零食</div>
-                        <div class="text-sm text-slate-600">日幣 ¥ 計價 + 台幣自動換算</div>
-                    </button>
-                    <button onclick="promptApplyTemplate('penghu')" class="btn-press p-4 rounded-2xl border-2 border-sky-300 bg-sky-50 hover:bg-sky-100 text-left transition-all">
-                        <div class="text-2xl mb-1">🏝️</div>
-                        <div class="text-lg font-black text-slate-900">澎湖海味名產</div>
-                        <div class="text-sm text-slate-600">黑糖糕、干貝醬、小管片</div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 卡片 2：幣別與匯率換算設定 -->
-            <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border-2 border-slate-200 space-y-4">
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-coins text-amber-500"></i> 幣別與台幣匯率換算
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-base font-bold text-slate-700 mb-1.5">計價貨幣符號</label>
-                        <select id="settingCurrency" onchange="saveCurrencySettings()" class="w-full text-xl p-3.5 border-2 border-slate-300 rounded-2xl bg-slate-50 font-bold text-slate-900">
-                            <option value="NT$">NT$ (新台幣)</option>
-                            <option value="¥">¥ (日幣 JPY)</option>
-                            <option value="₩">₩ (韓元 KRW)</option>
-                            <option value="$">$ (美金 USD)</option>
-                            <option value="฿">฿ (泰銖 THB)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-base font-bold text-slate-700 mb-1.5">
-                            對台幣匯率 <span class="text-sm font-normal text-slate-500">(台幣計價填 1)</span>
-                        </label>
-                        <input type="number" step="0.0001" id="settingExchangeRate" onchange="saveCurrencySettings()" placeholder="例如：0.215" 
-                            class="w-full text-xl p-3.5 border-2 border-slate-300 rounded-2xl bg-slate-50 font-bold text-slate-900">
-                    </div>
-                </div>
-                <p id="currencyPreviewHint" class="text-base font-bold text-emerald-700 bg-emerald-50 p-3 rounded-xl">
-                    💡 目前為新台幣計價，無需匯率換算。
-                </p>
-            </div>
-
-            <!-- 卡片 3：土產上架與編輯管理 -->
-            <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border-2 border-slate-200 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-store text-amber-500"></i> 目前上架土產清單
-                        </h2>
-                        <p class="text-base text-slate-600">支援相機現場實拍、相簿選圖或使用內建圖示</p>
-                    </div>
-                    <button onclick="openProductEditorModal(null)" class="btn-press py-3.5 px-5 rounded-2xl text-lg font-black bg-amber-500 hover:bg-amber-600 text-slate-900 shadow-md flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> 新增上架土產
-                    </button>
-                </div>
-
-                <!-- 商品管理列表 -->
-                <div id="settingsProductList" class="space-y-3 pt-2"></div>
-            </div>
-
-            <!-- 卡片 4：🔐 變更導遊管理密碼 -->
-            <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border-2 border-amber-300 space-y-4">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-key text-amber-500"></i> 🔐 變更導遊管理密碼
-                    </h2>
-                    <p class="text-base text-slate-600 mt-1">此密碼同時保護「導遊總表」與「商品設定」，避免團員誤按修改（預設為 1234）</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="newGuidePwdInput" class="block text-base font-bold text-slate-700 mb-1.5">
-                            新密碼 <span class="text-sm font-normal text-slate-500">(4～8位數字或英數)</span>
-                        </label>
-                        <div class="relative">
-                            <input type="password" id="newGuidePwdInput" maxlength="8" placeholder="請輸入新密碼"
-                                class="w-full text-xl p-3.5 pr-12 border-2 border-slate-300 rounded-2xl bg-slate-50 font-bold text-slate-900 focus:border-amber-500 focus:outline-none">
-                            <button type="button" onclick="togglePasswordVisibility('newGuidePwdInput', this)"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 p-2">
-                                <i class="fa-solid fa-eye text-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="confirmGuidePwdInput" class="block text-base font-bold text-slate-700 mb-1.5">
-                            確認新密碼
-                        </label>
-                        <div class="relative">
-                            <input type="password" id="confirmGuidePwdInput" maxlength="8" placeholder="請再輸入一次新密碼"
-                                class="w-full text-xl p-3.5 pr-12 border-2 border-slate-300 rounded-2xl bg-slate-50 font-bold text-slate-900 focus:border-amber-500 focus:outline-none">
-                            <button type="button" onclick="togglePasswordVisibility('confirmGuidePwdInput', this)"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 p-2">
-                                <i class="fa-solid fa-eye text-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-1 flex justify-end">
-                    <button type="button" onclick="saveNewGuidePassword()" 
-                        class="btn-press w-full sm:w-auto py-3.5 px-8 rounded-2xl text-lg font-black bg-slate-900 hover:bg-slate-800 text-amber-400 shadow-md flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> 儲存新密碼
-                    </button>
-                </div>
-            </div>
-
-            <!-- 底部恢復出廠預設值 -->
-            <div class="text-center pt-2">
-                <button onclick="promptFactoryReset()" class="text-slate-500 hover:text-rose-600 text-base font-bold underline">
-                    重設為出廠預設值（清除所有自訂商品與訂單）
-                </button>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- 團員端底部固定結帳列 -->
-    <footer id="memberCheckoutBar" class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-base sm:text-lg font-bold text-slate-600">共 <span id="cartTotalCount" class="text-amber-600 font-black text-xl">0</span> 件</span>
-                    <span id="cartDiscountBadge" class="hidden text-xs sm:text-sm font-black bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md">
-                        已省 <span class="currency-symbol">NT$</span><span id="cartSavedAmount">0</span>
-                    </span>
-                </div>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900">
-                    <span class="currency-symbol">NT$</span> <span id="cartFinalAmount">0</span>
-                </div>
-                <div id="cartTwdEquivalent" class="hidden text-sm font-bold text-emerald-700">
-                    約合台幣 NT$ <span id="cartTwdAmount">0</span> 元
-                </div>
-            </div>
-            
-            <button id="submitOrderBtn" onclick="openConfirmModal()" 
-                class="btn-press bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xl sm:text-2xl py-4 px-6 sm:px-8 rounded-2xl shadow-lg flex items-center gap-2 transition-all">
-                <span>確認送出</span>
-                <i class="fa-solid fa-arrow-right"></i>
+        <div class="form-group">
+          <label class="form-label">對台幣匯率 <span class="form-sub">(台幣計價填 1)</span></label>
+          <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:8px;">
+            <input type="number" id="exchangeRateInput" step="0.0001" value="1" oninput="saveCurrencySettings()" />
+            <button type="button" class="btn btn-info" id="fetchRateBtn" onclick="fetchLiveExchangeRate()">
+              🌐 抓最新匯率
             </button>
+          </div>
+          <div id="rateFetchStatus" class="rate-status"></div>
         </div>
-    </footer>
 
-    <!-- 通用自訂互動視窗 (完全取代原生 confirm/alert) -->
-    <div id="customModal" class="hidden fixed inset-0 bg-slate-900/75 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-slate-200 max-h-[90vh] flex flex-col">
-            <h3 id="modalTitle" class="text-2xl font-black text-slate-900 mb-3 shrink-0">視窗標題</h3>
-            <div id="modalBody" class="text-lg text-slate-700 space-y-4 overflow-y-auto mb-6 flex-1 pr-1">
-                <!-- 動態內容 -->
-            </div>
-            <div id="modalFooter" class="grid grid-cols-2 gap-3 shrink-0">
-                <!-- 動態按鈕 -->
-            </div>
+        <div class="rate-box" id="ratePreviewBox">
+          💡 匯率試算：當地貨幣 $1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ 1,000 元」
         </div>
-    </div>
+      </div>
 
-    <!-- 實拍照片放大檢視 Lightbox 燈箱 -->
-    <div id="imageLightbox" onclick="closeLightbox()" class="hidden fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400" onclick="event.stopPropagation()">
-            <img id="lightboxImg" src="" alt="土產實拍大圖" class="w-full max-h-[65vh] object-contain bg-slate-100">
-            <div class="p-4 flex items-center justify-between gap-3 bg-white">
-                <h4 id="lightboxTitle" class="text-xl font-black text-slate-900 truncate">商品名稱</h4>
-                <button onclick="closeLightbox()" class="btn-press bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold text-lg shrink-0">
-                    關閉預覽
-                </button>
-            </div>
+      <!-- 一鍵切換旅遊路線範本 -->
+      <div class="card">
+        <div class="card-title">🗺️ 快速套用旅遊路線範本</div>
+        <div style="display:grid; gap:10px;">
+          <button class="btn btn-outline" onclick="confirmApplyPreset('tw')">🇹🇼 台灣經典伴手禮範本</button>
+          <button class="btn btn-outline" onclick="confirmApplyPreset('jp')">🇯🇵 日本人氣零食藥妝範本</button>
+          <button class="btn btn-outline" onclick="confirmApplyPreset('ph')">🏝️ 澎湖海味名產範本</button>
         </div>
+      </div>
+
+      <!-- 新增 / 編輯土產表單 -->
+      <div class="card" id="productEditorCard">
+        <div class="card-title" id="editorTitle">➕ 新增上架土產</div>
+        <input type="hidden" id="editProductId" value="" />
+
+        <div class="form-group">
+          <label class="form-label">土產名稱</label>
+          <input type="text" id="prodName" placeholder="例如：老街手作鳳梨酥" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">一句話特色介紹</label>
+          <input type="text" id="prodDesc" placeholder="例如：不黏牙、送禮首選" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">單價（依上方設定貨幣）</label>
+          <input type="number" id="prodPrice" placeholder="例如：350" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">促銷優惠規則</label>
+          <select id="prodPromoType" onchange="togglePromoFields()">
+            <option value="none">無優惠（單價 × 數量）</option>
+            <option value="bundle">多件組合特價（滿 X 件特價 Y 元）</option>
+            <option value="buyXgetY">買 X 送 Y（滿 X+Y 件只收 X 件錢）</option>
+          </select>
+        </div>
+
+        <div id="promoDetailFields" style="display:none; background:#f8fafc; padding:12px; border-radius:14px; margin-bottom:16px; border:2px solid #cbd5e1;">
+          <div class="btn-row">
+            <div>
+              <label class="form-label" id="promoParam1Label">滿幾件</label>
+              <input type="number" id="prodPromoX" value="3" />
+            </div>
+            <div>
+              <label class="form-label" id="promoParam2Label">特價總金額</label>
+              <input type="number" id="prodPromoY" value="1000" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">商品照片或圖示</label>
+          <div class="btn-row" style="margin-bottom:10px;">
+            <label class="btn btn-info" style="margin:0;">
+              📷 現場拍照
+              <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleImageUpload(event)" />
+            </label>
+            <label class="btn btn-outline" style="margin:0;">
+              🖼️ 選取相簿
+              <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(event)" />
+            </label>
+          </div>
+          <div id="imagePreviewWrap" style="display:none; margin-bottom:10px; text-align:center;">
+            <img id="imagePreview" style="width:120px; height:120px; object-fit:cover; border-radius:14px; border:2px solid #94a3b8;" />
+            <div style="margin-top:6px;">
+              <button type="button" class="btn btn-danger" style="min-height:46px; padding:6px 12px;" onclick="clearUploadedImage()">移除照片改用圖示</button>
+            </div>
+          </div>
+          <div class="icon-grid" id="iconGrid"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-success" onclick="saveProduct()">💾 儲存上架商品</button>
+          <button class="btn btn-outline" onclick="resetProductForm()">取消重填</button>
+        </div>
+      </div>
+
+      <!-- 已上架商品清單管理 -->
+      <div class="card">
+        <div class="card-title">📦 已上架商品管理</div>
+        <div id="adminProductList"></div>
+      </div>
+
+      <!-- 變更導遊管理密碼 -->
+      <div class="card">
+        <div class="card-title">🔐 變更導遊管理密碼</div>
+        <div class="form-group">
+          <label class="form-label">輸入新密碼（4～8 碼）</label>
+          <input type="password" id="newPasswordInput" maxlength="8" placeholder="請輸入新密碼" />
+        </div>
+        <button class="btn btn-primary" onclick="changeGuidePassword()">🔑 儲存新密碼</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 底部固定試算與送出列 -->
+  <div class="bottom-bar" id="memberBottomBar">
+    <div class="bottom-inner">
+      <div class="total-info">
+        共 <span id="totalQty">0</span> 件｜
+        <span class="total-amount" id="totalAmountText">NT$ 0</span>
+        <div id="totalTwdSub" style="font-size:18px; color:#6ee7b7; display:none;"></div>
+      </div>
+      <button class="btn btn-primary" style="width:auto; padding:12px 20px;" onclick="openCheckoutModal()">
+        ✅ 確認下單
+      </button>
     </div>
+  </div>
 
-    <!-- 隱藏的檔案上傳 input (分別對應相機拍照與相簿挑選) -->
-    <input type="file" id="cameraFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageFileSelected(event)">
-    <input type="file" id="galleryFileInput" accept="image/*" class="hidden" onchange="handleImageFileSelected(event)">
-
-    <!-- 頂部浮動提示 Toast -->
-    <div id="toastNotification" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-amber-400 flex items-center gap-3 text-lg font-bold max-w-[92vw]">
-        <i class="fa-solid fa-circle-check text-2xl text-emerald-400 shrink-0"></i>
-        <span id="toastMessage">操作成功！</span>
+  <!-- 自訂確認與密碼彈窗 -->
+  <div class="modal-backdrop" id="customModal">
+    <div class="modal-box">
+      <div class="modal-title" id="modalTitle">提示</div>
+      <div class="modal-body" id="modalBody"></div>
+      <div id="modalExtra"></div>
+      <div class="btn-row" id="modalActions"></div>
     </div>
+  </div>
 
-    <!-- 隱藏文字框用於安全複製剪貼簿 -->
-    <textarea id="clipboardHelper" class="sr-only" aria-hidden="true"></textarea>
+  <div class="toast" id="toastMsg"></div>
 
-    <script>
-        // ==========================================
-        // 1. 路線範本與預設資料庫
-        // ==========================================
-        const EMOJI_CHOICES = ['🍍', '🍃', '🍘', '🥫', '🥩', '🍫', '🍵', '🍪', '🦑', '🥭', '🥜', '🍯', '🎁', '🛍️', '💊', '🧴'];
+  <script>
+    // ==================== 狀態與預設資料 ====================
+    const ICONS = ['🍍', '🥮', '🍵', '🍪', '🦑', '🥭', '🍫', '🍘', '🍯', '🥜', '🎁', '🛍️'];
 
-        const ROUTE_TEMPLATES = {
-            taiwan: {
-                currency: 'NT$',
-                exchangeRate: 1,
-                products: [
-                    {
-                        id: 'p1',
-                        name: '冠軍金鑽土鳳梨酥 (12入/盒)',
-                        tagline: '嚴選關廟土鳳梨，酸甜不膩口，伴手禮第一名！',
-                        price: 350,
-                        promoType: 'bundle',
-                        promoQty: 3,
-                        promoPrice: 1000,
-                        emoji: '🍍',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'p2',
-                        name: '古法炭焙阿里山高山烏龍茶 (半斤罐)',
-                        tagline: '茶湯金黃甘醇、回甘喉韻強，長輩與長官最愛。',
-                        price: 600,
-                        promoType: 'bundle',
-                        promoQty: 2,
-                        promoPrice: 1100,
-                        emoji: '🍃',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'p3',
-                        name: '手工黑糖沙琪瑪 (家庭號大包裝)',
-                        tagline: '純手工熬煮黑糖，酥脆完全不黏牙，車上零嘴首選！',
-                        price: 150,
-                        promoType: 'buyXgetY',
-                        buyQty: 3,
-                        freeQty: 1,
-                        emoji: '🍘',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'p4',
-                        name: '老街秘製蜜汁豬肉乾 (厚切條子)',
-                        tagline: '每日現烤鎖住肉汁，獨立真空包裝，分送親友不沾手。',
-                        price: 250,
-                        promoType: 'none',
-                        emoji: '🥩',
-                        imageUrl: ''
-                    }
-                ]
-            },
-            japan: {
-                currency: '¥',
-                exchangeRate: 0.215,
-                products: [
-                    {
-                        id: 'jp1',
-                        name: '北海道白色戀人巧克力餅乾 (18入)',
-                        tagline: '日本必買經典伴手禮，香濃白巧克力夾心！',
-                        price: 1500,
-                        promoType: 'bundle',
-                        promoQty: 3,
-                        promoPrice: 4200,
-                        emoji: '🍫',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'jp2',
-                        name: '京都宇治抹茶夾心薄餅禮盒',
-                        tagline: '濃郁宇治抹茶香氣，精緻和風包裝送禮超體面。',
-                        price: 1200,
-                        promoType: 'buyXgetY',
-                        buyQty: 4,
-                        freeQty: 1,
-                        emoji: '🍵',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'jp3',
-                        name: '日本限定帆立貝干貝糖 (大袋裝)',
-                        tagline: '整顆北海道干貝調味烘烤，越嚼越香停不下來！',
-                        price: 1000,
-                        promoType: 'bundle',
-                        promoQty: 3,
-                        promoPrice: 2800,
-                        emoji: '🥫',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'jp4',
-                        name: '日本藥妝人氣溫感貼布 (140枚入)',
-                        tagline: '長輩指定代購王！舒緩肩頸腰背疲勞必備。',
-                        price: 980,
-                        promoType: 'none',
-                        emoji: '💊',
-                        imageUrl: ''
-                    }
-                ]
-            },
-            penghu: {
-                currency: 'NT$',
-                exchangeRate: 1,
-                products: [
-                    {
-                        id: 'ph1',
-                        name: '澎湖古早味現蒸黑糖糕 (盒裝)',
-                        tagline: 'Q彈蓬鬆不甜膩，滿滿白芝麻香氣，當日現做直送！',
-                        price: 120,
-                        promoType: 'buyXgetY',
-                        buyQty: 5,
-                        freeQty: 1,
-                        emoji: '🍘',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'ph2',
-                        name: '頂級干貝XO醬 (整顆小干貝)',
-                        tagline: '真材實料滿滿干貝絲，拌麵炒菜配稀飯神級美味。',
-                        price: 280,
-                        promoType: 'bundle',
-                        promoQty: 3,
-                        promoPrice: 800,
-                        emoji: '🥫',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'ph3',
-                        name: '炭烤手撕深海小管片',
-                        tagline: '鮮甜海味十足、越嚼越香，遊覽車上追劇聊天最佳良伴。',
-                        price: 200,
-                        promoType: 'bundle',
-                        promoQty: 3,
-                        promoPrice: 550,
-                        emoji: '🦑',
-                        imageUrl: ''
-                    },
-                    {
-                        id: 'ph4',
-                        name: '澎湖仙人掌果凍禮盒',
-                        tagline: '酸酸甜甜冰涼超消暑，小朋友最愛的人氣點心。',
-                        price: 180,
-                        promoType: 'none',
-                        emoji: '🥭',
-                        imageUrl: ''
-                    }
-                ]
-            }
+    const PRESETS = {
+      tw: {
+        code: 'TWD', symbol: 'NT$', rate: 1,
+        products: [
+          { id: 'p1', name: '老師傅手作土鳳梨酥', desc: '皮薄餡多不黏牙，送禮最體面', price: 350, promoType: 'bundle', promoX: 3, promoY: 1000, icon: '🍍', image: '' },
+          { id: 'p2', name: '古早味黑糖沙琪瑪', desc: '車上現吃零嘴，香脆不甜膩', price: 150, promoType: 'buyXgetY', promoX: 3, promoY: 1, icon: '🍪', image: '' },
+          { id: 'p3', name: '阿里山特等高山烏龍茶', desc: '清香回甘，長輩自用送禮首選', price: 800, promoType: 'none', promoX: 0, promoY: 0, icon: '🍵', image: '' }
+        ]
+      },
+      jp: {
+        code: 'JPY', symbol: '¥', rate: 0.215,
+        products: [
+          { id: 'j1', name: '北海道白色戀人(18入)', desc: '日本必買經典白巧克力夾心餅', price: 1500, promoType: 'none', promoX: 0, promoY: 0, icon: '🍪', image: '' },
+          { id: 'j2', name: '福岡草莓夾心餅乾禮盒', desc: '酸甜濃郁草莓香，辦公室分送超人氣', price: 1200, promoType: 'buyXgetY', promoX: 4, promoY: 1, icon: '🎁', image: '' },
+          { id: 'j3', name: '宇治抹茶生巧克力', desc: '入口即化濃厚抹茶香（附保冷袋）', price: 950, promoType: 'bundle', promoX: 3, promoY: 2700, icon: '🍫', image: '' }
+        ]
+      },
+      ph: {
+        code: 'TWD', symbol: 'NT$', rate: 1,
+        products: [
+          { id: 'ph1', name: '澎湖正宗黑糖糕', desc: '當日現蒸Q彈軟糯，伴手禮第一名', price: 120, promoType: 'buyXgetY', promoX: 5, promoY: 1, icon: '🥮', image: '' },
+          { id: 'ph2', name: '炭烤手撕魷魚絲', desc: '鮮甜海味越嚼越香，配茶下酒絕配', price: 250, promoType: 'bundle', promoX: 4, promoY: 900, icon: '🦑', image: '' },
+          { id: 'ph3', name: '頂級干貝XO醬(大罐)', desc: '真材實料整顆干貝，拌飯拌麵超開胃', price: 450, promoType: 'none', promoX: 0, promoY: 0, icon: '🍯', image: '' }
+        ]
+      }
+    };
+
+    let state = {
+      currencyCode: 'TWD',
+      currencySymbol: 'NT$',
+      exchangeRate: 1,
+      products: [],
+      cart: {},
+      orders: [],
+      isOrderLocked: false,
+      guidePassword: '1234',
+      isUnlocked: false,
+      selectedIcon: '🍍',
+      uploadedImage: ''
+    };
+
+    // ==================== 初始化 ====================
+    function initApp() {
+      const saved = localStorage.getItem('tour_souvenir_v2');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          state = { ...state, ...parsed, isUnlocked: false }; // 每次重開預設上鎖保護
+        } catch (e) {
+          applyPresetData('tw', false);
+        }
+      } else {
+        applyPresetData('tw', false);
+      }
+
+      syncCurrencyUI();
+      renderIconGrid();
+      renderAll();
+    }
+
+    function saveState() {
+      const toSave = {
+        currencyCode: state.currencyCode,
+        currencySymbol: state.currencySymbol,
+        exchangeRate: state.exchangeRate,
+        products: state.products,
+        orders: state.orders,
+        isOrderLocked: state.isOrderLocked,
+        guidePassword: state.guidePassword
+      };
+      localStorage.setItem('tour_souvenir_v2', JSON.stringify(toSave));
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toastMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
+    }
+
+    // ==================== 網路即時匯率抓取 ====================
+    function syncCurrencyUI() {
+      const sel = document.getElementById('currencySelect');
+      const targetVal = `${state.currencyCode}|${state.currencySymbol}`;
+      for (let opt of sel.options) {
+        if (opt.value === targetVal) {
+          sel.value = targetVal;
+          break;
+        }
+      }
+      document.getElementById('exchangeRateInput').value = state.exchangeRate;
+      updateRatePreview();
+    }
+
+    function onCurrencyChange() {
+      const val = document.getElementById('currencySelect').value;
+      const [code, symbol] = val.split('|');
+      state.currencyCode = code;
+      state.currencySymbol = symbol;
+
+      if (code === 'TWD') {
+        state.exchangeRate = 1;
+        document.getElementById('exchangeRateInput').value = 1;
+        document.getElementById('rateFetchStatus').textContent = '✅ 目前為新台幣計價';
+        saveCurrencySettings();
+      } else {
+        fetchLiveExchangeRate();
+      }
+    }
+
+    async function fetchLiveExchangeRate() {
+      const val = document.getElementById('currencySelect').value;
+      const [code, symbol] = val.split('|');
+      state.currencyCode = code;
+      state.currencySymbol = symbol;
+
+      if (code === 'TWD') {
+        state.exchangeRate = 1;
+        document.getElementById('exchangeRateInput').value = 1;
+        saveCurrencySettings();
+        return;
+      }
+
+      const btn = document.getElementById('fetchRateBtn');
+      const statusEl = document.getElementById('rateFetchStatus');
+      btn.disabled = true;
+      btn.textContent = '⏳ 連線中...';
+      statusEl.textContent = `正在從網路查詢今日 ${code} 對台幣最新匯率...`;
+
+      try {
+        const res = await fetch(`https://open.er-api.com/v6/latest/${code}`);
+        const data = await res.json();
+        if (data && data.result === 'success' && data.rates && data.rates.TWD) {
+          // 保留 4 位小數（日幣、韓元、越盾匯率較小需要精準度）
+          const liveRate = Number(data.rates.TWD.toFixed(4));
+          state.exchangeRate = liveRate;
+          document.getElementById('exchangeRateInput').value = liveRate;
+          const dateStr = new Date().toLocaleDateString('zh-TW');
+          statusEl.textContent = `✅ 已更新 ${dateStr} 最新匯率：1 ${code} ≈ ${liveRate} 台幣`;
+          showToast(`🌐 已更新最新匯率：${liveRate}`);
+          saveCurrencySettings();
+        } else {
+          throw new Error('格式異常');
+        }
+      } catch (err) {
+        statusEl.textContent = '⚠️ 網路無法連線，請手動輸入匯率數字';
+        showToast('⚠️ 匯率查詢失敗，請手動輸入');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🌐 抓最新匯率';
+      }
+    }
+
+    function saveCurrencySettings() {
+      const rateVal = parseFloat(document.getElementById('exchangeRateInput').value);
+      state.exchangeRate = (!isNaN(rateVal) && rateVal > 0) ? rateVal : 1;
+      updateRatePreview();
+      saveState();
+      renderAll();
+    }
+
+    function updateRatePreview() {
+      const sym = state.currencySymbol;
+      const twdExample = Math.round(1000 * state.exchangeRate).toLocaleString();
+      document.getElementById('ratePreviewBox').innerHTML =
+        `💡 匯率試算：當地貨幣 ${sym}1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ ${twdExample} 元」`;
+    }
+
+    // ==================== 密碼鎖與分頁切換 ====================
+    function switchTab(tab) {
+      if (tab === 'member') {
+        // 切回團員點單時自動上鎖，防止團員誤看後台
+        state.isUnlocked = false;
+        activateTabUI('member');
+        return;
+      }
+
+      if (!state.isUnlocked) {
+        promptPasswordModal(() => {
+          state.isUnlocked = true;
+          activateTabUI(tab);
+        });
+        return;
+      }
+
+      activateTabUI(tab);
+    }
+
+    function activateTabUI(tab) {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      document.getElementById(`sec-${tab}`).classList.add('active');
+      document.getElementById('memberBottomBar').style.display = (tab === 'member') ? 'block' : 'none';
+      updateHeaderBadges();
+      renderAll();
+    }
+
+    function handleLockBadgeClick() {
+      if (state.isUnlocked) {
+        state.isUnlocked = false;
+        activateTabUI('member');
+        showToast('🔒 已手動上鎖並切回團員畫面');
+      } else {
+        promptPasswordModal(() => {
+          state.isUnlocked = true;
+          updateHeaderBadges();
+          showToast('🔓 導遊已解鎖');
+        });
+      }
+    }
+
+    function promptPasswordModal(onSuccess) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalTitle').textContent = '🔐 請輸入導遊管理密碼';
+      document.getElementById('modalBody').textContent = '保護全車訂單與價格設定（預設密碼：1234）';
+      document.getElementById('modalExtra').innerHTML = `
+        <input type="password" id="pwdCheckInput" placeholder="請輸入密碼" style="margin-bottom:14px;" />
+      `;
+      document.getElementById('modalActions').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" id="pwdConfirmBtn">解鎖進入</button>
+      `;
+      modal.classList.add('open');
+
+      const input = document.getElementById('pwdCheckInput');
+      setTimeout(() => input.focus(), 100);
+
+      const verify = () => {
+        if (input.value === state.guidePassword) {
+          closeModal();
+          onSuccess();
+        } else {
+          showToast('❌ 密碼錯誤，請再試一次');
+          input.value = '';
+          input.focus();
+        }
+      };
+
+      document.getElementById('pwdConfirmBtn').onclick = verify;
+      input.onkeydown = (e) => { if (e.key === 'Enter') verify(); };
+    }
+
+    function toggleOrderLock() {
+      if (!state.isUnlocked) {
+        promptPasswordModal(() => {
+          state.isUnlocked = true;
+          state.isOrderLocked = !state.isOrderLocked;
+          saveState();
+          renderAll();
+        });
+        return;
+      }
+      state.isOrderLocked = !state.isOrderLocked;
+      saveState();
+      renderAll();
+      showToast(state.isOrderLocked ? '⛔ 已鎖定截單' : '🟢 已開放團員登記');
+    }
+
+    function updateHeaderBadges() {
+      const lockBtn = document.getElementById('lockBadgeBtn');
+      if (state.isUnlocked) {
+        lockBtn.className = 'badge-btn badge-unlock';
+        lockBtn.textContent = '🔓 導遊已解鎖(點此上鎖)';
+      } else {
+        lockBtn.className = 'badge-btn badge-lock';
+        lockBtn.textContent = '🔒 導遊管理已上鎖';
+      }
+
+      const orderBtn = document.getElementById('orderLockBtn');
+      if (state.isOrderLocked) {
+        orderBtn.className = 'badge-btn badge-closed';
+        orderBtn.textContent = '⛔ 已截單鎖定';
+      } else {
+        orderBtn.className = 'badge-btn badge-open';
+        orderBtn.textContent = '🟢 開放登記中';
+      }
+
+      document.getElementById('closedBanner').style.display = state.isOrderLocked ? 'block' : 'none';
+      document.getElementById('orderCountBadge').textContent = state.orders.length;
+    }
+
+    // ==================== 價格與優惠計算 ====================
+    function calcItemTotal(product, qty) {
+      if (qty <= 0) return 0;
+      const p = Number(product.price);
+      const x = Number(product.promoX);
+      const y = Number(product.promoY);
+
+      if (product.promoType === 'bundle' && x > 0 && y > 0) {
+        const bundles = Math.floor(qty / x);
+        const rem = qty % x;
+        return bundles * y + rem * p;
+      }
+      if (product.promoType === 'buyXgetY' && x > 0 && y > 0) {
+        const groupSize = x + y;
+        const fullGroups = Math.floor(qty / groupSize);
+        const rem = qty % groupSize;
+        const paidUnits = fullGroups * x + Math.min(rem, x);
+        return paidUnits * p;
+      }
+      return qty * p;
+    }
+
+    function formatPromoLabel(p) {
+      const sym = state.currencySymbol;
+      if (p.promoType === 'bundle' && p.promoX > 0) {
+        return `🔥 ${p.promoX} 件特價 ${sym}${Number(p.promoY).toLocaleString()}`;
+      }
+      if (p.promoType === 'buyXgetY' && p.promoX > 0) {
+        return `🎁 買 ${p.promoX} 送 ${p.promoY}`;
+      }
+      return '';
+    }
+
+    // ==================== 畫面渲染 ====================
+    function renderAll() {
+      updateHeaderBadges();
+      renderMemberProducts();
+      updateBottomTotal();
+      renderGuideDashboard();
+      renderAdminProducts();
+    }
+
+    function renderMemberProducts() {
+      const container = document.getElementById('memberProductList');
+      const sym = state.currencySymbol;
+      const isForeign = state.currencyCode !== 'TWD';
+
+      container.innerHTML = state.products.map(p => {
+        const qty = state.cart[p.id] || 0;
+        const promoText = formatPromoLabel(p);
+        const twdPrice = Math.round(p.price * state.exchangeRate).toLocaleString();
+        const mediaHtml = p.image
+          ? `<img src="${p.image}" alt="${p.name}" onclick="previewPhoto('${p.image}', '${p.name}')" />`
+          : `<span>${p.icon || '🎁'}</span>`;
+
+        return `
+          <div class="product-card">
+            <div class="product-top">
+              <div class="product-media">${mediaHtml}</div>
+              <div class="product-info">
+                <div class="product-name">${p.name}</div>
+                <div class="product-desc">${p.desc || ''}</div>
+                ${promoText ? `<div class="promo-tag">${promoText}</div>` : ''}
+              </div>
+            </div>
+            <div class="product-bottom">
+              <div>
+                <div class="price-tag">${sym} ${Number(p.price).toLocaleString()}</div>
+                ${isForeign ? `<div class="price-twd">約台幣 NT$ ${twdPrice}</div>` : ''}
+              </div>
+              <div class="qty-control">
+                <button class="qty-btn qty-minus" onclick="changeQty('${p.id}', -1)">－</button>
+                <div class="qty-num">${qty}</div>
+                <button class="qty-btn qty-plus" onclick="changeQty('${p.id}', 1)">＋</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function changeQty(prodId, delta) {
+      if (state.isOrderLocked) {
+        showToast('⛔ 目前已結單鎖定，請洽導遊');
+        return;
+      }
+      const cur = state.cart[prodId] || 0;
+      const next = Math.max(0, cur + delta);
+      if (next === 0) delete state.cart[prodId];
+      else state.cart[prodId] = next;
+
+      renderMemberProducts();
+      updateBottomTotal();
+    }
+
+    function updateBottomTotal() {
+      let totalQty = 0;
+      let totalAmount = 0;
+
+      state.products.forEach(p => {
+        const qty = state.cart[p.id] || 0;
+        totalQty += qty;
+        totalAmount += calcItemTotal(p, qty);
+      });
+
+      document.getElementById('totalQty').textContent = totalQty;
+      document.getElementById('totalAmountText').textContent = `${state.currencySymbol} ${totalAmount.toLocaleString()}`;
+
+      const twdSub = document.getElementById('totalTwdSub');
+      if (state.currencyCode !== 'TWD' && totalAmount > 0) {
+        const twdTotal = Math.round(totalAmount * state.exchangeRate).toLocaleString();
+        twdSub.style.display = 'block';
+        twdSub.textContent = `約合台幣 NT$ ${twdTotal} 元`;
+      } else {
+        twdSub.style.display = 'none';
+      }
+    }
+
+    function confirmResetCart() {
+      const hasItems = Object.values(state.cart).some(q => q > 0);
+      if (!hasItems) {
+        showToast('目前購物車已經是空的囉');
+        return;
+      }
+      openConfirmModal('🔄 確定全部歸零？', '要把目前選擇的所有商品數量都清空重算嗎？', () => {
+        state.cart = {};
+        renderMemberProducts();
+        updateBottomTotal();
+        showToast('✅ 已將數量全部歸零');
+      });
+    }
+
+    function openCheckoutModal() {
+      if (state.isOrderLocked) {
+        showToast('⛔ 本團已結單鎖定');
+        return;
+      }
+      const name = document.getElementById('buyerName').value.trim();
+      const seat = document.getElementById('buyerSeat').value.trim();
+      if (!name || !seat) {
+        showToast('⚠️ 請先填寫「姓名」與「座位號碼」');
+        return;
+      }
+
+      const items = [];
+      let totalAmount = 0;
+      state.products.forEach(p => {
+        const qty = state.cart[p.id] || 0;
+        if (qty > 0) {
+          const sub = calcItemTotal(p, qty);
+          items.push({ name: p.name, qty, subtotal: sub });
+          totalAmount += sub;
+        }
+      });
+
+      if (items.length === 0) {
+        showToast('⚠️ 您還沒有選擇任何土產喔');
+        return;
+      }
+
+      const sym = state.currencySymbol;
+      const twdStr = state.currencyCode !== 'TWD'
+        ? `<div style="color:#047857; font-weight:900; margin-top:6px;">約合台幣：NT$ ${Math.round(totalAmount * state.exchangeRate).toLocaleString()} 元</div>`
+        : '';
+
+      const listHtml = items.map(i => `<div>• ${i.name} × <b>${i.qty}</b>（${sym}${i.subtotal.toLocaleString()}）</div>`).join('');
+
+      openConfirmModal(
+        '📋 確認您的訂購明細',
+        `<div><b>訂購人：</b>${name}（座位：${seat}）</div>
+         <div style="margin:12px 0; padding:12px; background:#f8fafc; border-radius:12px;">${listHtml}</div>
+         <div style="font-size:24px; font-weight:900; color:#b45309;">總計：${sym} ${totalAmount.toLocaleString()}</div>
+         ${twdStr}`,
+        () => {
+          state.orders.unshift({
+            id: Date.now().toString(),
+            name,
+            seat,
+            items,
+            totalAmount,
+            currencySymbol: sym,
+            twdAmount: Math.round(totalAmount * state.exchangeRate),
+            paid: false
+          });
+          state.cart = {};
+          saveState();
+          renderAll();
+          showToast('🎉 登記成功！感謝您的訂購');
+        }
+      );
+    }
+
+    // ==================== 導遊總表與收款 ====================
+    function renderGuideDashboard() {
+      const summaryMap = {};
+      let grandTotal = 0;
+      let grandTwd = 0;
+
+      state.orders.forEach(o => {
+        grandTotal += o.totalAmount;
+        grandTwd += o.twdAmount;
+        o.items.forEach(it => {
+          summaryMap[it.name] = (summaryMap[it.name] || 0) + it.qty;
+        });
+      });
+
+      const summaryEl = document.getElementById('summaryList');
+      const keys = Object.keys(summaryMap);
+      if (keys.length === 0) {
+        summaryEl.innerHTML = '<div style="color:#64748b;">目前尚無團員登記訂單。</div>';
+      } else {
+        summaryEl.innerHTML = keys.map(k =>
+          `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0;">
+            <span>${k}</span>
+            <strong style="color:#b45309;">共 ${summaryMap[k]} 件</strong>
+          </div>`
+        ).join('') +
+        `<div style="margin-top:12px; font-weight:900; color:#0f172a;">
+          全車總金額：${state.currencySymbol} ${grandTotal.toLocaleString()}
+          ${state.currencyCode !== 'TWD' ? `（約 NT$ ${grandTwd.toLocaleString()}）` : ''}
+        </div>`;
+      }
+
+      const orderEl = document.getElementById('orderList');
+      if (state.orders.length === 0) {
+        orderEl.innerHTML = '<div style="color:#64748b;">尚無個人帳單紀錄。</div>';
+      } else {
+        orderEl.innerHTML = state.orders.map(o => `
+          <div class="order-item" style="border-color:${o.paid ? '#16a34a' : '#cbd5e1'}; background:${o.paid ? '#f0fdf4' : '#f8fafc'};">
+            <div class="order-header">
+              <div class="order-buyer">💺 ${o.seat} ｜ ${o.name}</div>
+              <button class="btn ${o.paid ? 'btn-success' : 'btn-outline'}" style="width:auto; min-height:46px; padding:6px 14px;" onclick="togglePaid('${o.id}')">
+                ${o.paid ? '✅ 已收款' : '⏳ 未付款'}
+              </button>
+            </div>
+            <div style="margin-bottom:8px;">
+              ${o.items.map(i => `• ${i.name} × ${i.qty}`).join('<br>')}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="font-size:22px; color:#b45309;">應收：${o.currencySymbol} ${o.totalAmount.toLocaleString()}</strong>
+              <button class="btn btn-danger" style="width:auto; min-height:44px; padding:6px 12px;" onclick="deleteOrder('${o.id}')">刪除</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function togglePaid(orderId) {
+      const target = state.orders.find(o => o.id === orderId);
+      if (target) {
+        target.paid = !target.paid;
+        saveState();
+        renderGuideDashboard();
+      }
+    }
+
+    function deleteOrder(orderId) {
+      openConfirmModal('🗑️ 刪除這筆訂單？', '刪除後無法復原，確定要刪除嗎？', () => {
+        state.orders = state.orders.filter(o => o.id !== orderId);
+        saveState();
+        renderAll();
+        showToast('已刪除該筆訂單');
+      });
+    }
+
+    function confirmClearAllOrders() {
+      if (state.orders.length === 0) return;
+      openConfirmModal('⚠️ 清空全車所有訂單？', '這會清除目前所有團員的登記紀錄，確定要清空嗎？', () => {
+        state.orders = [];
+        saveState();
+        renderAll();
+        showToast('已清空所有訂單');
+      });
+    }
+
+    function copySummaryToClipboard() {
+      if (state.orders.length === 0) {
+        showToast('目前沒有訂單可複製');
+        return;
+      }
+      const summaryMap = {};
+      state.orders.forEach(o => o.items.forEach(i => summaryMap[i.name] = (summaryMap[i.name] || 0) + i.qty));
+      let text = '🚌【本團伴手禮統計總表】\n';
+      Object.entries(summaryMap).forEach(([k, v]) => { text += `• ${k}：${v} 件\n`; });
+      text += '\n🧾【團員明細】\n';
+      state.orders.forEach(o => {
+        const itemsStr = o.items.map(i => `${i.name}x${i.qty}`).join('、');
+        text += `[${o.seat}] ${o.name}：${itemsStr}（${o.currencySymbol}${o.totalAmount}）${o.paid ? '✅已付' : '⏳未付'}\n`;
+      });
+      navigator.clipboard.writeText(text).then(() => showToast('📋 已複製統計文字，可直接貼上 LINE！'));
+    }
+
+    // ==================== 商品與密碼設定 ====================
+    function renderIconGrid() {
+      const grid = document.getElementById('iconGrid');
+      grid.innerHTML = ICONS.map(ic => `
+        <div class="icon-choice ${state.selectedIcon === ic ? 'selected' : ''}" onclick="selectIcon('${ic}')">${ic}</div>
+      `).join('');
+    }
+
+    function selectIcon(ic) {
+      state.selectedIcon = ic;
+      renderIconGrid();
+    }
+
+    function togglePromoFields() {
+      const type = document.getElementById('prodPromoType').value;
+      const box = document.getElementById('promoDetailFields');
+      if (type === 'none') {
+        box.style.display = 'none';
+      } else {
+        box.style.display = 'block';
+        document.getElementById('promoParam1Label').textContent = type === 'bundle' ? '滿幾件' : '買幾件';
+        document.getElementById('promoParam2Label').textContent = type === 'bundle' ? '特價總金額' : '送幾件';
+      }
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxSize = 400;
+          let w = img.width, h = img.height;
+          if (w > h && w > maxSize) { h *= maxSize / w; w = maxSize; }
+          else if (h > maxSize) { w *= maxSize / h; h = maxSize; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          state.uploadedImage = canvas.toDataURL('image/jpeg', 0.8);
+          document.getElementById('imagePreview').src = state.uploadedImage;
+          document.getElementById('imagePreviewWrap').style.display = 'block';
         };
-
-        const DEFAULT_DEMO_ORDERS = [
-            {
-                id: 'ord_demo_1',
-                seat: '2A',
-                name: '林美惠大姐',
-                items: { p1: 3, p3: 4 },
-                totalCount: 7,
-                originalAmount: 1650,
-                finalAmount: 1450,
-                savedAmount: 200,
-                paid: true,
-                timestamp: '10:15'
-            },
-            {
-                id: 'ord_demo_2',
-                seat: '5B',
-                name: '陳建國大哥',
-                items: { p2: 2, p4: 2 },
-                totalCount: 4,
-                originalAmount: 1700,
-                finalAmount: 1600,
-                savedAmount: 100,
-                paid: false,
-                timestamp: '10:22'
-            }
-        ];
-
-        // ==========================================
-        // 2. 系統狀態與儲存鍵值
-        // ==========================================
-        const STORAGE_KEY_CONFIG = 'tour_souvenir_config_v3';
-        const STORAGE_KEY_ORDERS = 'tour_souvenir_orders_v3';
-        const STORAGE_KEY_LOCKED = 'tour_souvenir_locked_v3';
-        const STORAGE_KEY_GUIDE_PWD = 'tour_souvenir_guide_pwd_v3';
-        const DEFAULT_GUIDE_PASSWORD = '1234';
-
-        let appConfig = {
-            currency: 'NT$',
-            exchangeRate: 1,
-            products: []
-        };
-        let currentCart = {};
-        let orders = [];
-        let isOrderLocked = false;
-        
-        // 導遊後台解鎖狀態（預設未解鎖，防止團員偷看總表或改設定）
-        let isGuideUnlocked = false;
-        let pendingTargetTab = null;
-
-        // 編輯器暫存狀態
-        let editingProductId = null;
-        let selectedEditorEmoji = '🍍';
-        let selectedEditorImageUrl = '';
-
-        // ==========================================
-        // 3. 初始化與儲存管理
-        // ==========================================
-        function initApp() {
-            // 載入商品設定
-            const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
-            if (savedConfig) {
-                try {
-                    appConfig = JSON.parse(savedConfig);
-                } catch (e) {
-                    appConfig = JSON.parse(JSON.stringify(ROUTE_TEMPLATES.taiwan));
-                }
-            } else {
-                appConfig = JSON.parse(JSON.stringify(ROUTE_TEMPLATES.taiwan));
-                saveConfigToStorage();
-            }
-
-            // 載入訂單資料
-            const savedOrders = localStorage.getItem(STORAGE_KEY_ORDERS);
-            if (savedOrders) {
-                try {
-                    orders = JSON.parse(savedOrders);
-                } catch (e) {
-                    orders = [...DEFAULT_DEMO_ORDERS];
-                }
-            } else {
-                orders = [...DEFAULT_DEMO_ORDERS];
-                saveOrdersToStorage();
-            }
-
-            isOrderLocked = localStorage.getItem(STORAGE_KEY_LOCKED) === 'true';
-
-            // 初始化購物車數量
-            appConfig.products.forEach(p => {
-                if (currentCart[p.id] === undefined) currentCart[p.id] = 0;
-            });
-
-            updateCurrencyLabels();
-            renderProductList();
-            updateCartSummary();
-            updateLockUI();
-            renderGuideDashboard();
-            renderSettingsView();
-        }
-
-        function saveConfigToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(appConfig));
-            } catch (e) {
-                showAlertModal('儲存空間已滿', '上傳的圖片過多導致瀏覽器空間已滿，建議刪除部分舊商品或改用內建圖示！');
-            }
-        }
-
-        function saveOrdersToStorage() {
-            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
-        }
-
-        function getGuidePassword() {
-            return localStorage.getItem(STORAGE_KEY_GUIDE_PWD) || DEFAULT_GUIDE_PASSWORD;
-        }
-
-        // ==========================================
-        // 4. 優惠標籤與金額計算引擎
-        // ==========================================
-        function getPromoBadgeText(p) {
-            const cur = appConfig.currency;
-            if (p.promoType === 'bundle' && p.promoQty > 1 && p.promoPrice > 0) {
-                const saved = (p.price * p.promoQty) - p.promoPrice;
-                return `🔥 ${p.promoQty}件特價 ${cur}${p.promoPrice.toLocaleString()}${saved > 0 ? ` (省${cur}${saved.toLocaleString()})` : ''}`;
-            }
-            if (p.promoType === 'buyXgetY' && p.buyQty > 0 && p.freeQty > 0) {
-                const totalItems = p.buyQty + p.freeQty;
-                const bundlePrice = p.buyQty * p.price;
-                return `🎁 買 ${p.buyQty} 送 ${p.freeQty} (選${totalItems}件只要 ${cur}${bundlePrice.toLocaleString()})`;
-            }
-            return '✨ 導遊精選推薦';
-        }
-
-        function calculateProductSubtotal(product, qty) {
-            if (qty <= 0) return { original: 0, final: 0, saved: 0 };
-            const original = product.price * qty;
-            let final = original;
-
-            if (product.promoType === 'bundle' && product.promoQty > 1 && qty >= product.promoQty) {
-                const bundles = Math.floor(qty / product.promoQty);
-                const remainder = qty % product.promoQty;
-                final = (bundles * product.promoPrice) + (remainder * product.price);
-            } else if (product.promoType === 'buyXgetY' && product.buyQty > 0 && product.freeQty > 0) {
-                const groupSize = product.buyQty + product.freeQty;
-                if (qty >= groupSize) {
-                    const groups = Math.floor(qty / groupSize);
-                    const remainder = qty % groupSize;
-                    final = (groups * product.buyQty * product.price) + (remainder * product.price);
-                }
-            }
-
-            return {
-                original,
-                final,
-                saved: Math.max(0, original - final)
-            };
-        }
-
-        function calculateCartTotals(cartObj) {
-            let totalCount = 0;
-            let originalAmount = 0;
-            let finalAmount = 0;
-
-            appConfig.products.forEach(p => {
-                const qty = cartObj[p.id] || 0;
-                if (qty > 0) {
-                    totalCount += qty;
-                    const sub = calculateProductSubtotal(p, qty);
-                    originalAmount += sub.original;
-                    finalAmount += sub.final;
-                }
-            });
-
-            return {
-                totalCount,
-                originalAmount,
-                finalAmount,
-                savedAmount: originalAmount - finalAmount
-            };
-        }
-
-        function updateCurrencyLabels() {
-            document.querySelectorAll('.currency-symbol').forEach(el => {
-                el.textContent = appConfig.currency;
-            });
-        }
-
-        // 渲染商品縮圖（若有實拍圖片則顯示照片，否則顯示大 Emoji）
-        function renderProductThumbnail(product, sizeClass = 'w-16 h-16 sm:w-20 sm:h-20', enableZoom = false) {
-            if (product.imageUrl) {
-                const zoomAttr = enableZoom ? `onclick="openLightbox('${product.id}')" title="點擊放大檢視照片"` : '';
-                const cursorClass = enableZoom ? 'cursor-zoom-in relative group' : '';
-                const zoomBadge = enableZoom ? `<span class="absolute bottom-1 right-1 bg-slate-900/75 text-white text-[10px] px-1.5 py-0.5 rounded-md"><i class="fa-solid fa-magnifying-glass-plus"></i></span>` : '';
-                return `
-                    <div ${zoomAttr} class="${sizeClass} rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 ${cursorClass}">
-                        <img src="${product.imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-full object-cover">
-                        ${zoomBadge}
-                    </div>
-                `;
-            }
-            return `
-                <div class="${sizeClass} rounded-2xl bg-amber-100 flex items-center justify-center text-4xl sm:text-5xl shrink-0">
-                    ${product.emoji || '🎁'}
-                </div>
-            `;
-        }
-
-        // ==========================================
-        // 5. 團員點單區 UI 與互動
-        // ==========================================
-        function renderProductList() {
-            const container = document.getElementById('productListContainer');
-            if (appConfig.products.length === 0) {
-                container.innerHTML = `<div class="bg-white p-8 rounded-3xl text-center text-slate-500 text-xl font-bold border-2 border-dashed border-slate-300">目前尚未上架任何土產，請導遊至「商品設定」新增！</div>`;
-                return;
-            }
-
-            const cur = appConfig.currency;
-            const rate = parseFloat(appConfig.exchangeRate) || 1;
-            const showTwd = cur !== 'NT$' && rate > 0;
-
-            container.innerHTML = appConfig.products.map(p => {
-                const qty = currentCart[p.id] || 0;
-                const sub = calculateProductSubtotal(p, qty);
-                const isSelected = qty > 0;
-                const promoText = getPromoBadgeText(p);
-                const twdPrice = Math.round(p.price * rate);
-
-                return `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-2 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/30' : 'border-slate-200'}">
-                    <div class="flex items-start gap-4">
-                        ${renderProductThumbnail(p, 'w-20 h-20 sm:w-24 sm:h-24', true)}
-                        
-                        <div class="flex-1 min-w-0">
-                            <span class="inline-block bg-amber-100 text-amber-900 text-sm sm:text-base font-bold px-3 py-1 rounded-lg mb-1.5">
-                                ${promoText}
-                            </span>
-                            <h3 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug">${escapeHtml(p.name)}</h3>
-                            <p class="text-base sm:text-lg text-slate-600 mt-1 leading-relaxed">${escapeHtml(p.tagline || '')}</p>
-                            
-                            <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <div>
-                                        <span class="text-sm text-slate-500 font-bold">單價</span>
-                                        <span class="text-2xl font-black text-rose-600">${cur}${p.price.toLocaleString()}</span>
-                                        ${sub.saved > 0 ? `<span class="ml-2 text-sm font-bold bg-rose-600 text-white px-2 py-0.5 rounded">已折 ${cur}${sub.saved.toLocaleString()}</span>` : ''}
-                                    </div>
-                                    ${showTwd ? `<div class="text-sm font-bold text-emerald-700">約合台幣 NT$ ${twdPrice.toLocaleString()}</div>` : ''}
-                                </div>
-
-                                <div class="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-300">
-                                    <button type="button" onclick="changeQty('${p.id}', -1)" ${isOrderLocked ? 'disabled' : ''}
-                                        class="btn-press w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white text-slate-800 border border-slate-300 text-2xl font-black flex items-center justify-center shadow-sm disabled:opacity-40">
-                                        <i class="fa-solid fa-minus"></i>
-                                    </button>
-                                    <span class="w-10 text-center text-2xl sm:text-3xl font-black text-slate-900">${qty}</span>
-                                    <button type="button" onclick="changeQty('${p.id}', 1)" ${isOrderLocked ? 'disabled' : ''}
-                                        class="btn-press w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-amber-500 text-slate-900 text-2xl font-black flex items-center justify-center shadow-sm disabled:opacity-40">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        function changeQty(productId, delta) {
-            if (isOrderLocked) {
-                showToast('目前已截單鎖定，如需加購請洽導遊！');
-                return;
-            }
-            const nextQty = (currentCart[productId] || 0) + delta;
-            if (nextQty < 0) return;
-            currentCart[productId] = nextQty;
-            renderProductList();
-            updateCartSummary();
-        }
-
-        // 「全部歸零」自訂確認視窗
-        function confirmResetCurrentCart() {
-            const totals = calculateCartTotals(currentCart);
-            if (totals.totalCount === 0) {
-                showToast('目前所有商品數量已經是 0 囉！');
-                return;
-            }
-
-            document.getElementById('modalTitle').textContent = '確定要將數量全部歸零嗎？';
-            document.getElementById('modalBody').innerHTML = `
-                <p class="text-xl leading-relaxed">您目前已經點選了 <strong class="text-amber-600">${totals.totalCount} 件</strong> 商品，確定要全部清空重新點選嗎？</p>
-            `;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">
-                    取消保留
-                </button>
-                <button type="button" onclick="executeResetCurrentCart()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-rose-600 text-white shadow-md">
-                    確定歸零
-                </button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function executeResetCurrentCart() {
-            Object.keys(currentCart).forEach(k => currentCart[k] = 0);
-            appConfig.products.forEach(p => currentCart[p.id] = 0);
-            renderProductList();
-            updateCartSummary();
-            closeModal();
-            showToast('🔄 已將所有數量全部歸零');
-        }
-
-        function updateCartSummary() {
-            const totals = calculateCartTotals(currentCart);
-            const cur = appConfig.currency;
-            const rate = parseFloat(appConfig.exchangeRate) || 1;
-
-            document.getElementById('cartTotalCount').textContent = totals.totalCount;
-            document.getElementById('cartFinalAmount').textContent = totals.finalAmount.toLocaleString();
-
-            const discountBadge = document.getElementById('cartDiscountBadge');
-            if (totals.savedAmount > 0) {
-                discountBadge.classList.remove('hidden');
-                document.getElementById('cartSavedAmount').textContent = totals.savedAmount.toLocaleString();
-            } else {
-                discountBadge.classList.add('hidden');
-            }
-
-            const twdEl = document.getElementById('cartTwdEquivalent');
-            if (cur !== 'NT$' && rate > 0 && totals.finalAmount > 0) {
-                twdEl.classList.remove('hidden');
-                document.getElementById('cartTwdAmount').textContent = Math.round(totals.finalAmount * rate).toLocaleString();
-            } else {
-                twdEl.classList.add('hidden');
-            }
-        }
-
-        function openConfirmModal() {
-            if (isOrderLocked) {
-                showToast('目前已停止線上收單，請直接通知導遊！');
-                return;
-            }
-
-            const seat = document.getElementById('seatInput').value.trim();
-            const name = document.getElementById('nameInput').value.trim();
-            const totals = calculateCartTotals(currentCart);
-            const cur = appConfig.currency;
-            const rate = parseFloat(appConfig.exchangeRate) || 1;
-
-            if (!seat) {
-                showAlertModal('請填寫座位號碼', '請在上方輸入您的「座位號碼」（例如：3A 或 5號），這樣發土產時才不會送錯位子喔！');
-                document.getElementById('seatInput').focus();
-                return;
-            }
-            if (!name) {
-                showAlertModal('請填寫姓名或暱稱', '請輸入您的「姓名或暱稱」，方便導遊為您核對帳單！');
-                document.getElementById('nameInput').focus();
-                return;
-            }
-            if (totals.totalCount === 0) {
-                showAlertModal('尚未選擇任何商品', '您還沒有點選任何土產喔！請按商品旁邊的「 + 」按鈕增加數量。');
-                return;
-            }
-
-            let itemsHtml = '';
-            appConfig.products.forEach(p => {
-                const qty = currentCart[p.id] || 0;
-                if (qty > 0) {
-                    const sub = calculateProductSubtotal(p, qty);
-                    const iconHtml = p.imageUrl 
-                        ? `<img src="${p.imageUrl}" class="w-8 h-8 rounded-lg object-cover inline-block mr-1.5 align-middle">`
-                        : `<span class="mr-1">${p.emoji}</span>`;
-                    itemsHtml += `
-                        <div class="flex justify-between items-center py-2.5 border-b border-slate-200 gap-2">
-                            <div>
-                                <div class="font-bold text-slate-900">${iconHtml}${escapeHtml(p.name)}</div>
-                                <div class="text-base text-slate-500">數量：${qty} 件 ${sub.saved > 0 ? `<span class="text-rose-600 font-bold">(優惠省 ${cur}${sub.saved.toLocaleString()})</span>` : ''}</div>
-                            </div>
-                            <div class="font-black text-xl text-slate-900 shrink-0">${cur}${sub.final.toLocaleString()}</div>
-                        </div>
-                    `;
-                }
-            });
-
-            const twdNote = (cur !== 'NT$' && rate > 0) 
-                ? `<div class="text-right text-base font-bold text-emerald-700 mt-1">約合新台幣 NT$ ${Math.round(totals.finalAmount * rate).toLocaleString()} 元</div>` 
-                : '';
-
-            document.getElementById('modalTitle').textContent = '請核對您的訂購明細';
-            document.getElementById('modalBody').innerHTML = `
-                <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 flex justify-between items-center">
-                    <span class="font-bold text-slate-700">訂購人資訊</span>
-                    <span class="font-black text-xl text-slate-900">座位【${escapeHtml(seat)}】${escapeHtml(name)}</span>
-                </div>
-                <div class="divide-y divide-slate-100">${itemsHtml}</div>
-                <div class="pt-2">
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xl font-bold text-slate-700">應付總金額（共 ${totals.totalCount} 件）</span>
-                        <span class="text-3xl font-black text-rose-600">${cur} ${totals.finalAmount.toLocaleString()}</span>
-                    </div>
-                    ${twdNote}
-                </div>
-            `;
-
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800 hover:bg-slate-300">
-                    返回修改
-                </button>
-                <button type="button" onclick="submitOrder()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900 hover:bg-amber-600 shadow-md">
-                    確定送出訂單
-                </button>
-            `;
-
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function submitOrder() {
-            const seat = document.getElementById('seatInput').value.trim();
-            const name = document.getElementById('nameInput').value.trim();
-            const totals = calculateCartTotals(currentCart);
-
-            const now = new Date();
-            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-            const newOrder = {
-                id: 'ord_' + Date.now(),
-                seat,
-                name,
-                items: { ...currentCart },
-                totalCount: totals.totalCount,
-                originalAmount: totals.originalAmount,
-                finalAmount: totals.finalAmount,
-                savedAmount: totals.savedAmount,
-                paid: false,
-                timestamp: timeStr
-            };
-
-            orders.unshift(newOrder);
-            saveOrdersToStorage();
-
-            document.getElementById('seatInput').value = '';
-            document.getElementById('nameInput').value = '';
-            appConfig.products.forEach(p => currentCart[p.id] = 0);
-
-            renderProductList();
-            updateCartSummary();
-            renderGuideDashboard();
-            closeModal();
-
-            showToast(`🎉 登記成功！已收到【${seat} ${name}】的訂單`);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // ==========================================
-        // 6. 導遊總控台 UI 與功能
-        // ==========================================
-        function renderGuideDashboard() {
-            document.getElementById('orderCountBadge').textContent = orders.length;
-            const cur = appConfig.currency;
-
-            let totalItems = 0;
-            let totalAmount = 0;
-            let paidAmount = 0;
-
-            const vendorCounts = {};
-            appConfig.products.forEach(p => vendorCounts[p.id] = 0);
-
-            orders.forEach(ord => {
-                totalItems += ord.totalCount;
-                totalAmount += ord.finalAmount;
-                if (ord.paid) paidAmount += ord.finalAmount;
-
-                appConfig.products.forEach(p => {
-                    if (ord.items[p.id]) {
-                        vendorCounts[p.id] += ord.items[p.id];
-                    }
-                });
-            });
-
-            document.getElementById('statPeople').textContent = orders.length;
-            document.getElementById('statItems').textContent = totalItems;
-            document.getElementById('statTotalAmount').textContent = totalAmount.toLocaleString();
-            document.getElementById('statPaidAmount').textContent = paidAmount.toLocaleString();
-
-            const vendorContainer = document.getElementById('vendorSummaryContainer');
-            vendorContainer.innerHTML = appConfig.products.map(p => {
-                const count = vendorCounts[p.id] || 0;
-                const iconHtml = p.imageUrl 
-                    ? `<img src="${p.imageUrl}" class="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-600">`
-                    : `<span class="text-2xl shrink-0">${p.emoji}</span>`;
-                return `
-                    <div class="py-3.5 flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-3 min-w-0">
-                            ${iconHtml}
-                            <span class="text-lg sm:text-xl font-bold text-slate-100 truncate">${escapeHtml(p.name)}</span>
-                        </div>
-                        <div class="shrink-0">
-                            <span class="text-2xl sm:text-3xl font-black ${count > 0 ? 'text-amber-400' : 'text-slate-500'}">${count}</span>
-                            <span class="text-base text-slate-400 ml-1">件</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            const membersContainer = document.getElementById('memberOrdersContainer');
-            if (orders.length === 0) {
-                membersContainer.innerHTML = `
-                    <div class="bg-white p-8 rounded-3xl border-2 border-dashed border-slate-300 text-center text-slate-500 text-xl font-bold">
-                        目前還沒有團員登記訂單喔！
-                    </div>
-                `;
-                return;
-            }
-
-            // 依座位號碼排序顯示，方便導遊發貨收錢
-            const sortedOrders = [...orders].sort((a, b) => a.seat.localeCompare(b.seat, 'zh-TW', { numeric: true }));
-
-            membersContainer.innerHTML = sortedOrders.map(ord => {
-                const itemTags = appConfig.products
-                    .filter(p => ord.items[p.id] > 0)
-                    .map(p => {
-                        const shortName = p.name.split(' ')[0].split('(')[0];
-                        return `<span class="inline-block bg-slate-100 border border-slate-300 text-slate-800 px-3 py-1 rounded-xl text-base font-bold mr-2 mb-2">${p.emoji} ${escapeHtml(shortName)} × <strong>${ord.items[p.id]}</strong></span>`;
-                    })
-                    .join('');
-
-                return `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-2 transition-all ${ord.paid ? 'border-emerald-400 bg-emerald-50/20' : 'border-rose-300'}">
-                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
-                        <div class="flex items-center gap-2.5">
-                            <span class="bg-slate-900 text-amber-400 font-black px-3 py-1 rounded-xl text-lg">
-                                座位 ${escapeHtml(ord.seat)}
-                            </span>
-                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">${escapeHtml(ord.name)}</h3>
-                            <span class="text-sm text-slate-400 font-medium">${ord.timestamp}</span>
-                        </div>
-                        
-                        <button type="button" onclick="confirmDeleteOrder('${ord.id}')" title="刪除此筆訂單"
-                            class="text-slate-400 hover:text-rose-600 p-2 rounded-xl hover:bg-rose-50 transition-colors">
-                            <i class="fa-solid fa-trash-can text-xl"></i>
-                        </button>
-                    </div>
-
-                    <div class="py-3">${itemTags || '<span class="text-slate-400 text-base">（原訂購商品已更動）</span>'}</div>
-
-                    <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                            <span class="text-base font-bold text-slate-500">應收金額：</span>
-                            <span class="text-2xl sm:text-3xl font-black text-slate-900">${cur} ${ord.finalAmount.toLocaleString()}</span>
-                            ${ord.savedAmount > 0 ? `<span class="text-sm text-rose-600 font-bold ml-1">(已折${cur}${ord.savedAmount.toLocaleString()})</span>` : ''}
-                        </div>
-
-                        <button type="button" onclick="toggleOrderPaid('${ord.id}')" 
-                            class="btn-press py-3 px-6 rounded-2xl text-lg sm:text-xl font-black text-white shadow-md flex items-center justify-center gap-2 transition-all ${ord.paid ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}">
-                            ${ord.paid 
-                                ? '<i class="fa-solid fa-circle-check"></i> 已收款完成' 
-                                : '<i class="fa-solid fa-hand-holding-dollar"></i> 未收款 (點此收款)'}
-                        </button>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        function toggleOrderPaid(orderId) {
-            const target = orders.find(o => o.id === orderId);
-            if (!target) return;
-            target.paid = !target.paid;
-            saveOrdersToStorage();
-            renderGuideDashboard();
-            showToast(target.paid ? `✅ 已標記【${target.seat} ${target.name}】為已收款` : `↩️ 已改回未收款狀態`);
-        }
-
-        function confirmDeleteOrder(orderId) {
-            const target = orders.find(o => o.id === orderId);
-            if (!target) return;
-
-            document.getElementById('modalTitle').textContent = '確定要刪除這筆訂單嗎？';
-            document.getElementById('modalBody').innerHTML = `
-                <p class="text-xl">您即將刪除 <strong>座位【${escapeHtml(target.seat)}】${escapeHtml(target.name)}</strong> 的訂購資料，刪除後無法復原喔！</p>
-            `;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消保留</button>
-                <button type="button" onclick="deleteOrder('${orderId}')" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-rose-600 text-white">確定刪除</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function deleteOrder(orderId) {
-            orders = orders.filter(o => o.id !== orderId);
-            saveOrdersToStorage();
-            renderGuideDashboard();
-            closeModal();
-            showToast('🗑️ 訂單已刪除');
-        }
-
-        function promptClearAllOrders() {
-            if (orders.length === 0) {
-                showToast('目前已經沒有任何訂單囉！');
-                return;
-            }
-            document.getElementById('modalTitle').textContent = '確定要清空所有訂單嗎？';
-            document.getElementById('modalBody').innerHTML = `<p class="text-xl">這將會刪除目前全部 <strong>${orders.length} 筆</strong>團員登記資料（商品清單會保留），適合在帶下一團之前清空使用。</p>`;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="executeClearAllOrders()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-rose-600 text-white">確定全部清空</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function executeClearAllOrders() {
-            orders = [];
-            saveOrdersToStorage();
-            renderGuideDashboard();
-            closeModal();
-            showToast('🧹 已清空所有訂單資料');
-        }
-
-        function toggleOrderLock() {
-            isOrderLocked = !isOrderLocked;
-            localStorage.setItem(STORAGE_KEY_LOCKED, isOrderLocked);
-            updateLockUI();
-            renderProductList();
-            showToast(isOrderLocked ? '🔒 已鎖定收單！團員端無法再送出新訂單' : '🟢 已重新開放團員點單！');
-        }
-
-        function updateLockUI() {
-            const headerBadge = document.getElementById('headerStatusBadge');
-            const lockBtn = document.getElementById('toggleOrderLockBtn');
-            const warningBanner = document.getElementById('closedWarningBanner');
-            const submitBtn = document.getElementById('submitOrderBtn');
-
-            if (isOrderLocked) {
-                headerBadge.className = 'px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-rose-600 text-white';
-                headerBadge.textContent = '🔒 已截單鎖定';
-                lockBtn.className = 'btn-press py-3.5 px-6 rounded-2xl text-lg font-black text-white bg-rose-600 hover:bg-rose-700 shadow-md flex items-center justify-center gap-2';
-                lockBtn.innerHTML = '<i class="fa-solid fa-lock"></i> 目前：已截單鎖定 (點擊重開)';
-                warningBanner.classList.remove('hidden');
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                headerBadge.className = 'px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500 text-white';
-                headerBadge.textContent = '🟢 開放登記中';
-                lockBtn.className = 'btn-press py-3.5 px-6 rounded-2xl text-lg font-black text-white bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2';
-                lockBtn.innerHTML = '<i class="fa-solid fa-unlock"></i> 目前：開放點單中 (點擊截單)';
-                warningBanner.classList.add('hidden');
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function copyLineSummary() {
-            if (orders.length === 0) {
-                showToast('目前沒有訂單可以複製喔！');
-                return;
-            }
-            const cur = appConfig.currency;
-            let lines = [];
-            lines.push('🚌【本團伴手禮訂購核對清單】');
-            lines.push('請各位貴賓核對座位與數量，謝謝大家！');
-            lines.push('--------------------');
-
-            let grandTotal = 0;
-            const sortedOrders = [...orders].sort((a, b) => a.seat.localeCompare(b.seat, 'zh-TW', { numeric: true }));
-            sortedOrders.forEach(ord => {
-                grandTotal += ord.finalAmount;
-                const statusIcon = ord.paid ? '✅已收' : '⏳未收';
-                const itemStrs = appConfig.products
-                    .filter(p => ord.items[p.id] > 0)
-                    .map(p => `${p.name.split(' ')[0].split('(')[0]}x${ord.items[p.id]}`)
-                    .join('、');
-                lines.push(`💺 ${ord.seat} ${ord.name}：${itemStrs} ➔ ${cur}${ord.finalAmount.toLocaleString()} (${statusIcon})`);
-            });
-
-            lines.push('--------------------');
-            lines.push(`📦 總計：${orders.length} 組訂購，總金額 ${cur}${grandTotal.toLocaleString()}`);
-
-            const helper = document.getElementById('clipboardHelper');
-            helper.value = lines.join('\n');
-            helper.select();
-            helper.setSelectionRange(0, 99999);
-
-            try {
-                document.execCommand('copy');
-                showToast('📋 已複製！可直接貼到 LINE 群組讓大家核對');
-            } catch (err) {
-                showToast('複製失敗，請手動選取複製');
-            }
-        }
-
-        // ==========================================
-        // 7. 導遊商品設定後台與相片上傳壓縮邏輯
-        // ==========================================
-        function renderSettingsView() {
-            document.getElementById('settingCurrency').value = appConfig.currency;
-            document.getElementById('settingExchangeRate').value = appConfig.exchangeRate;
-            updateCurrencyHint();
-
-            const listContainer = document.getElementById('settingsProductList');
-            const cur = appConfig.currency;
-
-            if (appConfig.products.length === 0) {
-                listContainer.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold border-2 border-dashed border-slate-300 rounded-2xl">尚未有任何商品，請點擊右上角「新增上架土產」</div>`;
-                return;
-            }
-
-            listContainer.innerHTML = appConfig.products.map(p => `
-                <div class="p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-start gap-3 min-w-0">
-                        ${renderProductThumbnail(p, 'w-14 h-14', false)}
-                        <div class="min-w-0">
-                            <h4 class="text-lg font-black text-slate-900 truncate">${escapeHtml(p.name)}</h4>
-                            <div class="text-base font-bold text-rose-600">單價：${cur}${p.price.toLocaleString()}</div>
-                            <div class="text-sm font-bold text-amber-800 bg-amber-100 inline-block px-2 py-0.5 rounded mt-1">
-                                ${getPromoBadgeText(p)}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button type="button" onclick="openProductEditorModal('${p.id}')" class="btn-press py-2.5 px-4 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-base hover:border-amber-500 flex items-center gap-1.5">
-                            <i class="fa-solid fa-pen"></i> 編輯
-                        </button>
-                        <button type="button" onclick="confirmDeleteProduct('${p.id}')" class="btn-press py-2.5 px-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 font-bold text-base hover:bg-rose-100">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function saveCurrencySettings() {
-            const cur = document.getElementById('settingCurrency').value;
-            let rate = parseFloat(document.getElementById('settingExchangeRate').value);
-            if (isNaN(rate) || rate <= 0) rate = 1;
-            if (cur === 'NT$') {
-                rate = 1;
-                document.getElementById('settingExchangeRate').value = 1;
-            }
-
-            appConfig.currency = cur;
-            appConfig.exchangeRate = rate;
-            saveConfigToStorage();
-            updateCurrencyLabels();
-            updateCurrencyHint();
-            renderProductList();
-            updateCartSummary();
-            renderGuideDashboard();
-            renderSettingsView();
-            showToast('💱 幣別與匯率設定已更新');
-        }
-
-        function updateCurrencyHint() {
-            const hintEl = document.getElementById('currencyPreviewHint');
-            if (appConfig.currency === 'NT$') {
-                hintEl.textContent = '💡 目前為新台幣計價，無需匯率換算。';
-            } else {
-                const sampleTwd = Math.round(1000 * appConfig.exchangeRate);
-                hintEl.textContent = `💡 匯率試算：當地貨幣 ${appConfig.currency}1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ ${sampleTwd.toLocaleString()} 元」`;
-            }
-        }
-
-        // 變更導遊管理密碼邏輯
-        function togglePasswordVisibility(inputId, btnEl) {
-            const input = document.getElementById(inputId);
-            const icon = btnEl.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fa-solid fa-eye-slash text-lg';
-            } else {
-                input.type = 'password';
-                icon.className = 'fa-solid fa-eye text-lg';
-            }
-        }
-
-        function saveNewGuidePassword() {
-            const newPwd = document.getElementById('newGuidePwdInput').value.trim();
-            const confirmPwd = document.getElementById('confirmGuidePwdInput').value.trim();
-
-            if (!newPwd || newPwd.length < 4) {
-                showAlertModal('密碼長度不足', '請設定至少 4 個字元（4～8位數字或英數）的導遊管理密碼！');
-                document.getElementById('newGuidePwdInput').focus();
-                return;
-            }
-            if (newPwd !== confirmPwd) {
-                showAlertModal('兩次密碼不一致', '「新密碼」與「確認新密碼」輸入不同，請重新檢查後再按儲存！');
-                document.getElementById('confirmGuidePwdInput').focus();
-                return;
-            }
-
-            localStorage.setItem(STORAGE_KEY_GUIDE_PWD, newPwd);
-            document.getElementById('newGuidePwdInput').value = '';
-            document.getElementById('confirmGuidePwdInput').value = '';
-            showToast('🔐 管理密碼已更新！下次登入請使用新密碼');
-        }
-
-        // 觸發相機拍照或相簿選圖
-        function triggerPhotoUpload(sourceType) {
-            if (sourceType === 'camera') {
-                document.getElementById('cameraFileInput').click();
-            } else {
-                document.getElementById('galleryFileInput').click();
-            }
-        }
-
-        // 讀取檔案並使用 HTML5 Canvas 自動等比例壓縮（最大邊長 400px，JPEG 0.78 品質）
-        function handleImageFileSelected(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const MAX_SIZE = 400;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_SIZE) {
-                            height = Math.round((height * MAX_SIZE) / width);
-                            width = MAX_SIZE;
-                        }
-                    } else {
-                        if (height > MAX_SIZE) {
-                            width = Math.round((width * MAX_SIZE) / height);
-                            height = MAX_SIZE;
-                        }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // 壓縮為輕量化 JPEG DataURL
-                    selectedEditorImageUrl = canvas.toDataURL('image/jpeg', 0.78);
-                    updateEditorVisualPreview();
-                    showToast('📸 商品照片已載入並完成最佳化壓縮！');
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-            // 清空 value 讓同一張照片可重複選取
-            event.target.value = '';
-        }
-
-        function clearEditorImage() {
-            selectedEditorImageUrl = '';
-            updateEditorVisualPreview();
-            showToast('已移除實拍照片，改用內建圖示');
-        }
-
-        function updateEditorVisualPreview() {
-            const previewBox = document.getElementById('editorVisualPreview');
-            const removeBtn = document.getElementById('removePhotoBtn');
-            if (!previewBox) return;
-
-            if (selectedEditorImageUrl) {
-                previewBox.innerHTML = `<img src="${selectedEditorImageUrl}" class="w-full h-full object-cover">`;
-                if (removeBtn) removeBtn.classList.remove('hidden');
-            } else {
-                previewBox.innerHTML = `<span class="text-5xl">${selectedEditorEmoji}</span>`;
-                if (removeBtn) removeBtn.classList.add('hidden');
-            }
-        }
-
-        // 開啟新增 / 編輯商品視窗
-        function openProductEditorModal(productId) {
-            editingProductId = productId;
-            const isEdit = Boolean(productId);
-            const target = isEdit ? appConfig.products.find(p => p.id === productId) : {
-                name: '',
-                tagline: '',
-                price: '',
-                promoType: 'none',
-                promoQty: 3,
-                promoPrice: '',
-                buyQty: 3,
-                freeQty: 1,
-                emoji: '🍍',
-                imageUrl: ''
-            };
-
-            selectedEditorEmoji = target.emoji || '🍍';
-            selectedEditorImageUrl = target.imageUrl || '';
-
-            const emojiButtonsHtml = EMOJI_CHOICES.map(em => `
-                <button type="button" onclick="selectEditorEmoji('${em}')" 
-                    class="emoji-choice-btn w-11 h-11 rounded-xl text-2xl flex items-center justify-center border-2 transition-all ${em === selectedEditorEmoji && !selectedEditorImageUrl ? 'border-amber-500 bg-amber-100 scale-105' : 'border-slate-200 bg-white'}">
-                    ${em}
-                </button>
-            `).join('');
-
-            document.getElementById('modalTitle').textContent = isEdit ? '✏️ 編輯土產商品' : '➕ 新增上架土產';
-            document.getElementById('modalBody').innerHTML = `
-                <div class="space-y-4">
-                    <!-- 商品圖片 / 圖示設定區塊 -->
-                    <div class="bg-slate-50 p-3.5 rounded-2xl border-2 border-slate-200 space-y-3">
-                        <label class="block text-base font-black text-slate-800">商品圖片或圖示</label>
-                        
-                        <div class="flex items-center gap-3">
-                            <!-- 目前預覽框 -->
-                            <div id="editorVisualPreview" class="w-20 h-20 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center overflow-hidden shrink-0">
-                                ${selectedEditorImageUrl 
-                                    ? `<img src="${selectedEditorImageUrl}" class="w-full h-full object-cover">` 
-                                    : `<span class="text-5xl">${selectedEditorEmoji}</span>`}
-                            </div>
-
-                            <!-- 相機與相簿按鈕 -->
-                            <div class="flex-1 space-y-2">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" onclick="triggerPhotoUpload('camera')" 
-                                        class="btn-press py-2.5 px-3 rounded-xl bg-slate-900 text-amber-400 font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 shadow-sm">
-                                        <i class="fa-solid fa-camera"></i> 現場拍照
-                                    </button>
-                                    <button type="button" onclick="triggerPhotoUpload('gallery')" 
-                                        class="btn-press py-2.5 px-3 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-sm sm:text-base flex items-center justify-center gap-1.5">
-                                        <i class="fa-solid fa-image"></i> 選取相簿
-                                    </button>
-                                </div>
-                                <button type="button" id="removePhotoBtn" onclick="clearEditorImage()" 
-                                    class="${selectedEditorImageUrl ? '' : 'hidden'} text-sm text-rose-600 font-bold underline flex items-center gap-1">
-                                    <i class="fa-solid fa-xmark"></i> 移除照片，改用下方圖示
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs font-bold text-slate-500 mb-1.5">或直接點選內建可愛圖示：</div>
-                            <div class="flex flex-wrap gap-1.5">${emojiButtonsHtml}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-base font-bold text-slate-700 mb-1">商品名稱與規格 <span class="text-rose-600">*</span></label>
-                        <input type="text" id="editProdName" value="${escapeHtml(target.name)}" placeholder="例如：高山烏龍茶 (半斤罐)" 
-                            class="w-full text-lg p-3 border-2 border-slate-300 rounded-xl font-bold text-slate-900">
-                    </div>
-
-                    <div>
-                        <label class="block text-base font-bold text-slate-700 mb-1">單價 (${appConfig.currency}) <span class="text-rose-600">*</span></label>
-                        <input type="number" id="editProdPrice" value="${target.price}" placeholder="例如：350" 
-                            class="w-full text-lg p-3 border-2 border-slate-300 rounded-xl font-bold text-slate-900">
-                    </div>
-
-                    <div>
-                        <label class="block text-base font-bold text-slate-700 mb-1">特色推薦語 (吸引團員購買)</label>
-                        <input type="text" id="editProdTagline" value="${escapeHtml(target.tagline || '')}" placeholder="例如：不黏牙、送禮首選！" 
-                            class="w-full text-base p-3 border-2 border-slate-300 rounded-xl text-slate-900">
-                    </div>
-
-                    <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 space-y-3">
-                        <label class="block text-base font-black text-amber-900">🎁 促銷優惠設定（系統自動折價）</label>
-                        <select id="editPromoType" onchange="togglePromoFields()" class="w-full text-base p-3 border-2 border-amber-300 rounded-xl bg-white font-bold text-slate-900">
-                            <option value="none" ${target.promoType === 'none' ? 'selected' : ''}>無特別優惠（單價 × 數量）</option>
-                            <option value="bundle" ${target.promoType === 'bundle' ? 'selected' : ''}>多件組合特價（例如：3盒特價 $1,000）</option>
-                            <option value="buyXgetY" ${target.promoType === 'buyXgetY' ? 'selected' : ''}>買 X 送 Y（例如：買 3 送 1）</option>
-                        </select>
-
-                        <!-- 多件組合特價欄位 -->
-                        <div id="promoBundleFields" class="${target.promoType === 'bundle' ? 'grid' : 'hidden'} grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700">買滿幾件</label>
-                                <input type="number" id="editBundleQty" value="${target.promoQty || 3}" class="w-full text-lg p-2.5 border border-slate-300 rounded-xl font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700">組合總特價 (${appConfig.currency})</label>
-                                <input type="number" id="editBundlePrice" value="${target.promoPrice || ''}" placeholder="例如：1000" class="w-full text-lg p-2.5 border border-slate-300 rounded-xl font-bold">
-                            </div>
-                        </div>
-
-                        <!-- 買 X 送 Y 欄位 -->
-                        <div id="promoBuyXgetYFields" class="${target.promoType === 'buyXgetY' ? 'grid' : 'hidden'} grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700">買幾件 (收費)</label>
-                                <input type="number" id="editBuyQty" value="${target.buyQty || 3}" class="w-full text-lg p-2.5 border border-slate-300 rounded-xl font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700">送幾件 (免費)</label>
-                                <input type="number" id="editFreeQty" value="${target.freeQty || 1}" class="w-full text-lg p-2.5 border border-slate-300 rounded-xl font-bold">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="saveProductFromEditor()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900 shadow-md">儲存上架</button>
-            `;
-
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function selectEditorEmoji(em) {
-            selectedEditorEmoji = em;
-            selectedEditorImageUrl = '';
-            document.querySelectorAll('.emoji-choice-btn').forEach(btn => {
-                if (btn.textContent.trim() === em) {
-                    btn.className = 'emoji-choice-btn w-11 h-11 rounded-xl text-2xl flex items-center justify-center border-2 transition-all border-amber-500 bg-amber-100 scale-105';
-                } else {
-                    btn.className = 'emoji-choice-btn w-11 h-11 rounded-xl text-2xl flex items-center justify-center border-2 transition-all border-slate-200 bg-white';
-                }
-            });
-            updateEditorVisualPreview();
-        }
-
-        function togglePromoFields() {
-            const type = document.getElementById('editPromoType').value;
-            document.getElementById('promoBundleFields').className = type === 'bundle' ? 'grid grid-cols-2 gap-2' : 'hidden';
-            document.getElementById('promoBuyXgetYFields').className = type === 'buyXgetY' ? 'grid grid-cols-2 gap-2' : 'hidden';
-        }
-
-        function saveProductFromEditor() {
-            const name = document.getElementById('editProdName').value.trim();
-            const price = parseFloat(document.getElementById('editProdPrice').value);
-            const tagline = document.getElementById('editProdTagline').value.trim();
-            const promoType = document.getElementById('editPromoType').value;
-
-            if (!name) {
-                showToast('⚠️ 請輸入商品名稱！');
-                return;
-            }
-            if (isNaN(price) || price <= 0) {
-                showToast('⚠️ 請輸入正確的單價金額！');
-                return;
-            }
-
-            const newProdObj = {
-                id: editingProductId || ('prod_' + Date.now()),
-                name,
-                price,
-                tagline: tagline || '導遊嚴選在地人氣伴手禮',
-                emoji: selectedEditorEmoji,
-                imageUrl: selectedEditorImageUrl,
-                promoType
-            };
-
-            if (promoType === 'bundle') {
-                const bQty = parseInt(document.getElementById('editBundleQty').value) || 3;
-                const bPrice = parseFloat(document.getElementById('editBundlePrice').value);
-                if (isNaN(bPrice) || bPrice <= 0) {
-                    showToast('⚠️ 請輸入組合優惠總價！');
-                    return;
-                }
-                newProdObj.promoQty = Math.max(2, bQty);
-                newProdObj.promoPrice = bPrice;
-            } else if (promoType === 'buyXgetY') {
-                const buyQ = parseInt(document.getElementById('editBuyQty').value) || 3;
-                const freeQ = parseInt(document.getElementById('editFreeQty').value) || 1;
-                newProdObj.buyQty = Math.max(1, buyQ);
-                newProdObj.freeQty = Math.max(1, freeQ);
-            }
-
-            if (editingProductId) {
-                const idx = appConfig.products.findIndex(p => p.id === editingProductId);
-                if (idx !== -1) appConfig.products[idx] = newProdObj;
-            } else {
-                appConfig.products.push(newProdObj);
-                currentCart[newProdObj.id] = 0;
-            }
-
-            saveConfigToStorage();
-            renderProductList();
-            updateCartSummary();
-            renderGuideDashboard();
-            renderSettingsView();
-            closeModal();
-            showToast(editingProductId ? '✅ 商品資訊已更新！' : '🎉 新土產已成功上架！');
-        }
-
-        function confirmDeleteProduct(productId) {
-            const target = appConfig.products.find(p => p.id === productId);
-            if (!target) return;
-
-            document.getElementById('modalTitle').textContent = '確定要下架並刪除此商品嗎？';
-            document.getElementById('modalBody').innerHTML = `<p class="text-xl">即將刪除商品：<strong>${escapeHtml(target.name)}</strong></p>`;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="deleteProduct('${productId}')" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-rose-600 text-white">確定刪除</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function deleteProduct(productId) {
-            appConfig.products = appConfig.products.filter(p => p.id !== productId);
-            delete currentCart[productId];
-            saveConfigToStorage();
-            renderProductList();
-            updateCartSummary();
-            renderGuideDashboard();
-            renderSettingsView();
-            closeModal();
-            showToast('🗑️ 商品已下架刪除');
-        }
-
-        // 套用旅遊路線範本
-        function promptApplyTemplate(templateKey) {
-            const names = { taiwan: '🇹🇼 台灣經典伴手禮', japan: '🇯🇵 日本人氣藥妝零食', penghu: '🏝️ 澎湖海味名產' };
-            document.getElementById('modalTitle').textContent = '套用旅遊路線範本？';
-            document.getElementById('modalBody').innerHTML = `
-                <p class="text-xl">確定要將目前商品清單與幣別一鍵替換為 <strong>${names[templateKey]}</strong> 嗎？</p>
-                <p class="text-base text-slate-500">（建議在出團前切換路線使用）</p>
-            `;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="executeApplyTemplate('${templateKey}')" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900">確定套用</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function executeApplyTemplate(templateKey) {
-            appConfig = JSON.parse(JSON.stringify(ROUTE_TEMPLATES[templateKey]));
-            currentCart = {};
-            appConfig.products.forEach(p => currentCart[p.id] = 0);
-            saveConfigToStorage();
-            updateCurrencyLabels();
-            renderProductList();
-            updateCartSummary();
-            renderGuideDashboard();
-            renderSettingsView();
-            closeModal();
-            showToast('✨ 已一鍵套用新路線土產清單！');
-        }
-
-        // 重設出廠預設值
-        function promptFactoryReset() {
-            document.getElementById('modalTitle').textContent = '重設為出廠預設值？';
-            document.getElementById('modalBody').innerHTML = `<p class="text-xl">這將會恢復成初始的台灣伴手禮範例與示範訂單，確定要執行嗎？</p>`;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="executeFactoryReset()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-rose-600 text-white">確定重設</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function executeFactoryReset() {
-            localStorage.removeItem(STORAGE_KEY_CONFIG);
-            localStorage.removeItem(STORAGE_KEY_ORDERS);
-            localStorage.removeItem(STORAGE_KEY_LOCKED);
-            currentCart = {};
-            initApp();
-            closeModal();
-            showToast('🔄 已恢復為出廠預設值');
-        }
-
-        // ==========================================
-        // 8. 統一導遊密碼保護、自動上鎖與分頁切換
-        // ==========================================
-        function requestSwitchTab(tabName) {
-            // 切回「團員點單」時，自動上鎖導遊權限，方便導遊把手機交給團員點餐
-            if (tabName === 'member') {
-                if (isGuideUnlocked) {
-                    lockGuideSession(false);
-                }
-                executeSwitchTab('member');
-                return;
-            }
-
-            // 「導遊總表」與「商品設定」皆受統一密碼保護
-            if (tabName === 'guide' || tabName === 'settings') {
-                if (isGuideUnlocked) {
-                    executeSwitchTab(tabName);
-                } else {
-                    pendingTargetTab = tabName;
-                    openGuidePasswordModal(tabName);
-                }
-            }
-        }
-
-        function lockGuideSession(redirectToMember = true) {
-            isGuideUnlocked = false;
-            document.getElementById('guideLockStatusBtn').classList.add('hidden');
-            if (redirectToMember) {
-                executeSwitchTab('member');
-                showToast('🔒 已手動上鎖導遊後台，可安心交給團員點單');
-            }
-        }
-
-        function openGuidePasswordModal(targetTab) {
-            const targetLabel = targetTab === 'guide' ? '導遊總表' : '商品設定';
-            document.getElementById('modalTitle').textContent = `🔒 請輸入導遊管理密碼`;
-            document.getElementById('modalBody').innerHTML = `
-                <p class="text-lg text-slate-600">進入「<strong>${targetLabel}</strong>」需驗證導遊身分，避免團員誤觸修改或查看全車帳單。</p>
-                <input type="password" id="guidePwdInput" maxlength="8" placeholder="請輸入管理密碼 (預設 1234)" 
-                    onkeydown="if(event.key==='Enter') verifyGuidePassword()"
-                    class="w-full text-2xl p-4 border-2 border-slate-300 rounded-2xl text-center font-black tracking-widest focus:border-amber-500 focus:outline-none">
-                <p id="pwdErrorMsg" class="hidden text-rose-600 font-bold text-center text-base">❌ 密碼錯誤，請再試一次！</p>
-                <div class="text-center pt-1">
-                    <button type="button" onclick="promptResetDefaultPassword()" class="text-sm text-slate-400 hover:text-slate-600 underline">
-                        忘記密碼？恢復預設 1234
-                    </button>
-                </div>
-            `;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">返回點單</button>
-                <button type="button" onclick="verifyGuidePassword()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900 shadow-md">解鎖進入</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-            setTimeout(() => {
-                const input = document.getElementById('guidePwdInput');
-                if (input) input.focus();
-            }, 100);
-        }
-
-        function verifyGuidePassword() {
-            const val = document.getElementById('guidePwdInput').value.trim();
-            const currentPwd = getGuidePassword();
-            if (val === currentPwd) {
-                isGuideUnlocked = true;
-                document.getElementById('guideLockStatusBtn').classList.remove('hidden');
-                closeModal();
-                const target = pendingTargetTab || 'guide';
-                pendingTargetTab = null;
-                executeSwitchTab(target);
-                showToast('🔓 導遊權限已解鎖（切回團員點單將自動上鎖）');
-            } else {
-                const errEl = document.getElementById('pwdErrorMsg');
-                errEl.classList.remove('hidden');
-                const input = document.getElementById('guidePwdInput');
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        function promptResetDefaultPassword() {
-            document.getElementById('modalTitle').textContent = '恢復預設管理密碼？';
-            document.getElementById('modalBody').innerHTML = `
-                <p class="text-xl leading-relaxed">確定要將導遊管理密碼重設為出廠預設值 <strong>1234</strong> 嗎？</p>
-            `;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="openGuidePasswordModal(pendingTargetTab || 'guide')" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-bold bg-slate-200 text-slate-800">取消</button>
-                <button type="button" onclick="executeResetDefaultPassword()" class="btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900">確定恢復 1234</button>
-            `;
-        }
-
-        function executeResetDefaultPassword() {
-            localStorage.setItem(STORAGE_KEY_GUIDE_PWD, DEFAULT_GUIDE_PASSWORD);
-            showToast('🔑 密碼已恢復為預設值 1234');
-            openGuidePasswordModal(pendingTargetTab || 'guide');
-        }
-
-        function executeSwitchTab(tabName) {
-            const views = {
-                member: document.getElementById('viewMember'),
-                guide: document.getElementById('viewGuide'),
-                settings: document.getElementById('viewSettings')
-            };
-            const tabs = {
-                member: document.getElementById('tabMember'),
-                guide: document.getElementById('tabGuide'),
-                settings: document.getElementById('tabSettings')
-            };
-            const checkoutBar = document.getElementById('memberCheckoutBar');
-
-            Object.keys(views).forEach(key => {
-                if (key === tabName) {
-                    views[key].classList.remove('hidden');
-                    tabs[key].className = 'btn-press py-2.5 sm:py-3 px-2 rounded-xl text-base sm:text-lg font-black transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-900 shadow-md';
-                } else {
-                    views[key].classList.add('hidden');
-                    tabs[key].className = 'btn-press py-2.5 sm:py-3 px-2 rounded-xl text-base sm:text-lg font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white';
-                }
-            });
-
-            if (tabName === 'member') {
-                checkoutBar.classList.remove('hidden');
-            } else {
-                checkoutBar.classList.add('hidden');
-            }
-
-            if (tabName === 'guide') renderGuideDashboard();
-            if (tabName === 'settings') renderSettingsView();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // ==========================================
-        // 9. 照片放大燈箱與通用彈窗工具
-        // ==========================================
-        function openLightbox(productId) {
-            const prod = appConfig.products.find(p => p.id === productId);
-            if (!prod || !prod.imageUrl) return;
-            document.getElementById('lightboxImg').src = prod.imageUrl;
-            document.getElementById('lightboxTitle').textContent = prod.name;
-            document.getElementById('imageLightbox').classList.remove('hidden');
-        }
-
-        function closeLightbox() {
-            document.getElementById('imageLightbox').classList.add('hidden');
-        }
-
-        function showAlertModal(title, message) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').innerHTML = `<p class="text-xl leading-relaxed">${message}</p>`;
-            document.getElementById('modalFooter').innerHTML = `
-                <button type="button" onclick="closeModal()" class="col-span-2 btn-press py-3.5 px-4 rounded-2xl text-xl font-black bg-amber-500 text-slate-900">我知道了</button>
-            `;
-            document.getElementById('customModal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('customModal').classList.add('hidden');
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
-        let toastTimer = null;
-        function showToast(msg) {
-            const toast = document.getElementById('toastNotification');
-            document.getElementById('toastMessage').textContent = msg;
-            toast.classList.remove('hidden');
-            if (toastTimer) clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        window.onload = initApp;
-    </script>
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUploadedImage() {
+      state.uploadedImage = '';
+      document.getElementById('imagePreviewWrap').style.display = 'none';
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('prodName').value.trim();
+      const desc = document.getElementById('prodDesc').value.trim();
+      const price = parseFloat(document.getElementById('prodPrice').value);
+      const promoType = document.getElementById('prodPromoType').value;
+      const promoX = parseInt(document.getElementById('prodPromoX').value) || 0;
+      const promoY = parseFloat(document.getElementById('prodPromoY').value) || 0;
+      const editId = document.getElementById('editProductId').value;
+
+      if (!name || isNaN(price) || price <= 0) {
+        showToast('⚠️ 請輸入正確的商品名稱與單價');
+        return;
+      }
+
+      const itemData = {
+        id: editId || 'prod_' + Date.now(),
+        name,
+        desc,
+        price,
+        promoType,
+        promoX,
+        promoY,
+        icon: state.selectedIcon,
+        image: state.uploadedImage
+      };
+
+      if (editId) {
+        const idx = state.products.findIndex(p => p.id === editId);
+        if (idx > -1) state.products[idx] = itemData;
+        showToast('✅ 商品已更新');
+      } else {
+        state.products.push(itemData);
+        showToast('✅ 已新增上架土產');
+      }
+
+      resetProductForm();
+      saveState();
+      renderAll();
+    }
+
+    function editProduct(id) {
+      const p = state.products.find(item => item.id === id);
+      if (!p) return;
+      document.getElementById('editorTitle').textContent = '✏️ 編輯土產商品';
+      document.getElementById('editProductId').value = p.id;
+      document.getElementById('prodName').value = p.name;
+      document.getElementById('prodDesc').value = p.desc;
+      document.getElementById('prodPrice').value = p.price;
+      document.getElementById('prodPromoType').value = p.promoType;
+      document.getElementById('prodPromoX').value = p.promoX || 3;
+      document.getElementById('prodPromoY').value = p.promoY || 1000;
+      togglePromoFields();
+      state.selectedIcon = p.icon || '🍍';
+      state.uploadedImage = p.image || '';
+      if (state.uploadedImage) {
+        document.getElementById('imagePreview').src = state.uploadedImage;
+        document.getElementById('imagePreviewWrap').style.display = 'block';
+      } else {
+        document.getElementById('imagePreviewWrap').style.display = 'none';
+      }
+      renderIconGrid();
+      document.getElementById('productEditorCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetProductForm() {
+      document.getElementById('editorTitle').textContent = '➕ 新增上架土產';
+      document.getElementById('editProductId').value = '';
+      document.getElementById('prodName').value = '';
+      document.getElementById('prodDesc').value = '';
+      document.getElementById('prodPrice').value = '';
+      document.getElementById('prodPromoType').value = 'none';
+      togglePromoFields();
+      clearUploadedImage();
+    }
+
+    function deleteProduct(id) {
+      openConfirmModal('🗑️ 下架刪除此商品？', '確定要從清單中移除這項土產嗎？', () => {
+        state.products = state.products.filter(p => p.id !== id);
+        delete state.cart[id];
+        saveState();
+        renderAll();
+        showToast('已刪除商品');
+      });
+    }
+
+    function renderAdminProducts() {
+      const el = document.getElementById('adminProductList');
+      el.innerHTML = state.products.map(p => `
+        <div class="order-item">
+          <div style="font-weight:900; font-size:22px; margin-bottom:4px;">
+            ${p.icon || '🎁'} ${p.name}（${state.currencySymbol}${p.price}）
+          </div>
+          <div style="color:#b91c1c; font-weight:800; margin-bottom:10px;">${formatPromoLabel(p) || '無組合優惠'}</div>
+          <div class="btn-row">
+            <button class="btn btn-outline" style="min-height:48px;" onclick="editProduct('${p.id}')">✏️ 編輯</button>
+            <button class="btn btn-danger" style="min-height:48px;" onclick="deleteProduct('${p.id}')">🗑️ 刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function confirmApplyPreset(key) {
+      openConfirmModal('🗺️ 套用路線範本？', '套用後會替換目前的商品清單與幣別設定，確定要套用嗎？', () => {
+        applyPresetData(key, true);
+        showToast('✅ 已套用旅遊路線範本');
+      });
+    }
+
+    function applyPresetData(key, triggerRateFetch) {
+      const preset = PRESETS[key];
+      state.currencyCode = preset.code;
+      state.currencySymbol = preset.symbol;
+      state.exchangeRate = preset.rate;
+      state.products = JSON.parse(JSON.stringify(preset.products));
+      state.cart = {};
+      syncCurrencyUI();
+      saveState();
+      renderAll();
+      if (triggerRateFetch && preset.code !== 'TWD') {
+        fetchLiveExchangeRate();
+      }
+    }
+
+    function changeGuidePassword() {
+      const newPwd = document.getElementById('newPasswordInput').value.trim();
+      if (newPwd.length < 4 || newPwd.length > 8) {
+        showToast('⚠️ 請輸入 4 到 8 碼的新密碼');
+        return;
+      }
+      state.guidePassword = newPwd;
+      document.getElementById('newPasswordInput').value = '';
+      saveState();
+      showToast('🔑 導遊管理密碼已更新！');
+    }
+
+    // ==================== 通用彈窗 ====================
+    function openConfirmModal(title, bodyHtml, onConfirm) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      document.getElementById('modalExtra').innerHTML = '';
+      document.getElementById('modalActions').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" id="modalOkBtn">確定執行</button>
+      `;
+      modal.classList.add('open');
+      document.getElementById('modalOkBtn').onclick = () => {
+        closeModal();
+        onConfirm();
+      };
+    }
+
+    function previewPhoto(src, title) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = `<img src="${src}" style="width:100%; border-radius:14px;" />`;
+      document.getElementById('modalExtra').innerHTML = '';
+      document.getElementById('modalActions').innerHTML = `<button class="btn btn-primary" style="grid-column:1/-1;" onclick="closeModal()">關閉預覽</button>`;
+      modal.classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('customModal').classList.remove('open');
+    }
+
+    initApp();
+  </script>
 </body>
 </html>
