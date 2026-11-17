@@ -32,12 +32,12 @@
     body {
       background-color: var(--bg-page);
       color: var(--text-main);
-      font-size: 21px; /* 全面放大基準字體，對齊標題大小 */
+      font-size: 21px;
       line-height: 1.45;
       padding-bottom: 130px;
     }
 
-    /* 頂部導覽列：減少留白、字體放大 */
+    /* 頂部導覽列 */
     header {
       background-color: var(--bg-header);
       color: #ffffff;
@@ -64,6 +64,16 @@
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .sync-badge {
+      font-size: 15px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background-color: #1e293b;
+      color: #34d399;
+      border: 1px solid #34d399;
     }
 
     .status-row {
@@ -113,7 +123,7 @@
       color: #ffffff;
     }
 
-    /* 三大分頁：不折行、大字體、好點擊 */
+    /* 三大分頁 */
     .nav-tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -156,7 +166,7 @@
       margin-left: 2px;
     }
 
-    /* 主內容區：極小左右留白，最大化手機顯示面積 */
+    /* 主內容區 */
     .container {
       max-width: 680px;
       margin: 0 auto;
@@ -171,7 +181,6 @@
       display: block;
     }
 
-    /* 卡片樣式 */
     .card {
       background-color: var(--bg-card);
       border-radius: var(--radius-lg);
@@ -193,7 +202,6 @@
       padding-bottom: 10px;
     }
 
-    /* 表單元素：超大字體與大點擊區 */
     .form-group {
       margin-bottom: 16px;
     }
@@ -235,7 +243,6 @@
       background-color: #ffffff;
     }
 
-    /* 按鈕樣式 */
     .btn {
       width: 100%;
       min-height: 58px;
@@ -288,7 +295,6 @@
       gap: 10px;
     }
 
-    /* 匯率提示框 */
     .rate-box {
       background-color: #ecfdf5;
       border: 2px solid #6ee7b7;
@@ -394,7 +400,6 @@
       color: #047857;
     }
 
-    /* 超大加減按鈕 */
     .qty-control {
       display: flex;
       align-items: center;
@@ -573,6 +578,7 @@
   <header>
     <div class="header-top">
       <div class="app-title">🚌 伴手禮團購登記站</div>
+      <div class="sync-badge" id="cloudSyncBadge">☁️ 連線中...</div>
     </div>
 
     <div class="status-row">
@@ -807,8 +813,21 @@
 
   <div class="toast" id="toastMsg"></div>
 
-  <script>
-    // ==================== 狀態與預設資料 ====================
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+    import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
+
+    // 1. 初始化 Firebase (已自動配置您的 tour-shop 專案資訊)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY", // 請替換成您在 Firebase 主頁取得的 API 金鑰
+      authDomain: "tour-shop-85441.firebaseapp.com",
+      databaseURL: "https://tour-shop-85441-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tour-shop-85441"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 2. 狀態與預設資料（掛載在 window 確保全域讀取）
     const ICONS = ['🍍', '🥮', '🍵', '🍪', '🦑', '🥭', '🍫', '🍘', '🍯', '🥜', '🎁', '🛍️'];
 
     const PRESETS = {
@@ -838,7 +857,7 @@
       }
     };
 
-    let state = {
+    window.state = {
       currencyCode: 'TWD',
       currencySymbol: 'NT$',
       exchangeRate: 1,
@@ -852,86 +871,120 @@
       uploadedImage: ''
     };
 
-    // ==================== 初始化 ====================
-    function initApp() {
-      const saved = localStorage.getItem('tour_souvenir_v2');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          state = { ...state, ...parsed, isUnlocked: false }; // 每次重開預設上鎖保護
-        } catch (e) {
-          applyPresetData('tw', false);
+    // 3. 升級儲存邏輯：直接即時寫入 Firebase 雲端
+    window.saveState = function() {
+      set(ref(db, 'tour_state'), {
+        currencyCode: window.state.currencyCode,
+        currencySymbol: window.state.currencySymbol,
+        exchangeRate: window.state.exchangeRate,
+        products: window.state.products,
+        orders: window.state.orders,
+        isOrderLocked: window.state.isOrderLocked,
+        guidePassword: window.state.guidePassword
+      }).catch((err) => {
+        console.error('Firebase 寫入失敗:', err);
+        window.showToast('⚠️ 雲端同步失敗，請檢查網路或金鑰');
+      });
+    };
+
+    // 4. 監聽雲端資料，實現多人全自動即時同步
+    window.initApp = function() {
+      onValue(ref(db, 'tour_state'), (snapshot) => {
+        const syncBadge = document.getElementById('cloudSyncBadge');
+        if (syncBadge) {
+          syncBadge.textContent = '☁️ 雲端同步中';
+          syncBadge.style.color = '#34d399';
+          syncBadge.style.borderColor = '#34d399';
         }
-      } else {
-        applyPresetData('tw', false);
-      }
 
-      syncCurrencyUI();
-      renderIconGrid();
-      renderAll();
-    }
+        const cloudData = snapshot.val();
+        if (cloudData) {
+          // 保留本機操作狀態 (cart, isUnlocked, selectedIcon, uploadedImage)，同步雲端共用資料
+          // 注意：Firebase 若陣列為空會回傳 undefined，若轉為物件則用 Object.values 還原為陣列
+          const normalizedProducts = Array.isArray(cloudData.products)
+            ? cloudData.products
+            : (cloudData.products ? Object.values(cloudData.products) : []);
+          const normalizedOrders = Array.isArray(cloudData.orders)
+            ? cloudData.orders
+            : (cloudData.orders ? Object.values(cloudData.orders) : []);
 
-    function saveState() {
-      const toSave = {
-        currencyCode: state.currencyCode,
-        currencySymbol: state.currencySymbol,
-        exchangeRate: state.exchangeRate,
-        products: state.products,
-        orders: state.orders,
-        isOrderLocked: state.isOrderLocked,
-        guidePassword: state.guidePassword
-      };
-      localStorage.setItem('tour_souvenir_v2', JSON.stringify(toSave));
-    }
+          window.state = {
+            ...window.state,
+            currencyCode: cloudData.currencyCode || 'TWD',
+            currencySymbol: cloudData.currencySymbol || 'NT$',
+            exchangeRate: cloudData.exchangeRate || 1,
+            products: normalizedProducts,
+            orders: normalizedOrders,
+            isOrderLocked: Boolean(cloudData.isOrderLocked),
+            guidePassword: cloudData.guidePassword || '1234'
+          };
+        } else {
+          window.applyPresetData('tw', false);
+          window.saveState();
+        }
+        window.syncCurrencyUI();
+        window.renderIconGrid();
+        window.renderAll();
+      }, (error) => {
+        console.error('Firebase 讀取錯誤:', error);
+        const syncBadge = document.getElementById('cloudSyncBadge');
+        if (syncBadge) {
+          syncBadge.textContent = '⚠️ 離線/未連線';
+          syncBadge.style.color = '#f87171';
+          syncBadge.style.borderColor = '#f87171';
+        }
+      });
+    };
 
-    function showToast(msg) {
+    // ==================== 提示訊息 ====================
+    window.showToast = function(msg) {
       const el = document.getElementById('toastMsg');
       el.textContent = msg;
       el.style.display = 'block';
       clearTimeout(window._toastTimer);
       window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
-    }
+    };
 
     // ==================== 網路即時匯率抓取 ====================
-    function syncCurrencyUI() {
+    window.syncCurrencyUI = function() {
       const sel = document.getElementById('currencySelect');
-      const targetVal = `${state.currencyCode}|${state.currencySymbol}`;
+      const targetVal = `${window.state.currencyCode}|${window.state.currencySymbol}`;
       for (let opt of sel.options) {
         if (opt.value === targetVal) {
           sel.value = targetVal;
           break;
         }
       }
-      document.getElementById('exchangeRateInput').value = state.exchangeRate;
-      updateRatePreview();
-    }
+      document.getElementById('exchangeRateInput').value = window.state.exchangeRate;
+      window.updateRatePreview();
+    };
 
-    function onCurrencyChange() {
+    window.onCurrencyChange = function() {
       const val = document.getElementById('currencySelect').value;
       const [code, symbol] = val.split('|');
-      state.currencyCode = code;
-      state.currencySymbol = symbol;
+      window.state.currencyCode = code;
+      window.state.currencySymbol = symbol;
 
       if (code === 'TWD') {
-        state.exchangeRate = 1;
+        window.state.exchangeRate = 1;
         document.getElementById('exchangeRateInput').value = 1;
         document.getElementById('rateFetchStatus').textContent = '✅ 目前為新台幣計價';
-        saveCurrencySettings();
+        window.saveCurrencySettings();
       } else {
-        fetchLiveExchangeRate();
+        window.fetchLiveExchangeRate();
       }
-    }
+    };
 
-    async function fetchLiveExchangeRate() {
+    window.fetchLiveExchangeRate = async function() {
       const val = document.getElementById('currencySelect').value;
       const [code, symbol] = val.split('|');
-      state.currencyCode = code;
-      state.currencySymbol = symbol;
+      window.state.currencyCode = code;
+      window.state.currencySymbol = symbol;
 
       if (code === 'TWD') {
-        state.exchangeRate = 1;
+        window.state.exchangeRate = 1;
         document.getElementById('exchangeRateInput').value = 1;
-        saveCurrencySettings();
+        window.saveCurrencySettings();
         return;
       }
 
@@ -945,86 +998,84 @@
         const res = await fetch(`https://open.er-api.com/v6/latest/${code}`);
         const data = await res.json();
         if (data && data.result === 'success' && data.rates && data.rates.TWD) {
-          // 保留 4 位小數（日幣、韓元、越盾匯率較小需要精準度）
           const liveRate = Number(data.rates.TWD.toFixed(4));
-          state.exchangeRate = liveRate;
+          window.state.exchangeRate = liveRate;
           document.getElementById('exchangeRateInput').value = liveRate;
           const dateStr = new Date().toLocaleDateString('zh-TW');
           statusEl.textContent = `✅ 已更新 ${dateStr} 最新匯率：1 ${code} ≈ ${liveRate} 台幣`;
-          showToast(`🌐 已更新最新匯率：${liveRate}`);
-          saveCurrencySettings();
+          window.showToast(`🌐 已更新最新匯率：${liveRate}`);
+          window.saveCurrencySettings();
         } else {
           throw new Error('格式異常');
         }
       } catch (err) {
         statusEl.textContent = '⚠️ 網路無法連線，請手動輸入匯率數字';
-        showToast('⚠️ 匯率查詢失敗，請手動輸入');
+        window.showToast('⚠️ 匯率查詢失敗，請手動輸入');
       } finally {
         btn.disabled = false;
         btn.textContent = '🌐 抓最新匯率';
       }
-    }
+    };
 
-    function saveCurrencySettings() {
+    window.saveCurrencySettings = function() {
       const rateVal = parseFloat(document.getElementById('exchangeRateInput').value);
-      state.exchangeRate = (!isNaN(rateVal) && rateVal > 0) ? rateVal : 1;
-      updateRatePreview();
-      saveState();
-      renderAll();
-    }
+      window.state.exchangeRate = (!isNaN(rateVal) && rateVal > 0) ? rateVal : 1;
+      window.updateRatePreview();
+      window.saveState();
+      window.renderAll();
+    };
 
-    function updateRatePreview() {
-      const sym = state.currencySymbol;
-      const twdExample = Math.round(1000 * state.exchangeRate).toLocaleString();
+    window.updateRatePreview = function() {
+      const sym = window.state.currencySymbol;
+      const twdExample = Math.round(1000 * window.state.exchangeRate).toLocaleString();
       document.getElementById('ratePreviewBox').innerHTML =
         `💡 匯率試算：當地貨幣 ${sym}1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ ${twdExample} 元」`;
-    }
+    };
 
     // ==================== 密碼鎖與分頁切換 ====================
-    function switchTab(tab) {
+    window.switchTab = function(tab) {
       if (tab === 'member') {
-        // 切回團員點單時自動上鎖，防止團員誤看後台
-        state.isUnlocked = false;
-        activateTabUI('member');
+        window.state.isUnlocked = false;
+        window.activateTabUI('member');
         return;
       }
 
-      if (!state.isUnlocked) {
-        promptPasswordModal(() => {
-          state.isUnlocked = true;
-          activateTabUI(tab);
+      if (!window.state.isUnlocked) {
+        window.promptPasswordModal(() => {
+          window.state.isUnlocked = true;
+          window.activateTabUI(tab);
         });
         return;
       }
 
-      activateTabUI(tab);
-    }
+      window.activateTabUI(tab);
+    };
 
-    function activateTabUI(tab) {
+    window.activateTabUI = function(tab) {
       document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       document.getElementById(`sec-${tab}`).classList.add('active');
       document.getElementById('memberBottomBar').style.display = (tab === 'member') ? 'block' : 'none';
-      updateHeaderBadges();
-      renderAll();
-    }
+      window.updateHeaderBadges();
+      window.renderAll();
+    };
 
-    function handleLockBadgeClick() {
-      if (state.isUnlocked) {
-        state.isUnlocked = false;
-        activateTabUI('member');
-        showToast('🔒 已手動上鎖並切回團員畫面');
+    window.handleLockBadgeClick = function() {
+      if (window.state.isUnlocked) {
+        window.state.isUnlocked = false;
+        window.activateTabUI('member');
+        window.showToast('🔒 已手動上鎖並切回團員畫面');
       } else {
-        promptPasswordModal(() => {
-          state.isUnlocked = true;
-          updateHeaderBadges();
-          showToast('🔓 導遊已解鎖');
+        window.promptPasswordModal(() => {
+          window.state.isUnlocked = true;
+          window.updateHeaderBadges();
+          window.showToast('🔓 導遊已解鎖');
         });
       }
-    }
+    };
 
-    function promptPasswordModal(onSuccess) {
+    window.promptPasswordModal = function(onSuccess) {
       const modal = document.getElementById('customModal');
       document.getElementById('modalTitle').textContent = '🔐 請輸入導遊管理密碼';
       document.getElementById('modalBody').textContent = '保護全車訂單與價格設定（預設密碼：1234）';
@@ -1041,11 +1092,11 @@
       setTimeout(() => input.focus(), 100);
 
       const verify = () => {
-        if (input.value === state.guidePassword) {
-          closeModal();
+        if (input.value === window.state.guidePassword) {
+          window.closeModal();
           onSuccess();
         } else {
-          showToast('❌ 密碼錯誤，請再試一次');
+          window.showToast('❌ 密碼錯誤，請再試一次');
           input.value = '';
           input.focus();
         }
@@ -1053,27 +1104,27 @@
 
       document.getElementById('pwdConfirmBtn').onclick = verify;
       input.onkeydown = (e) => { if (e.key === 'Enter') verify(); };
-    }
+    };
 
-    function toggleOrderLock() {
-      if (!state.isUnlocked) {
-        promptPasswordModal(() => {
-          state.isUnlocked = true;
-          state.isOrderLocked = !state.isOrderLocked;
-          saveState();
-          renderAll();
+    window.toggleOrderLock = function() {
+      if (!window.state.isUnlocked) {
+        window.promptPasswordModal(() => {
+          window.state.isUnlocked = true;
+          window.state.isOrderLocked = !window.state.isOrderLocked;
+          window.saveState();
+          window.renderAll();
         });
         return;
       }
-      state.isOrderLocked = !state.isOrderLocked;
-      saveState();
-      renderAll();
-      showToast(state.isOrderLocked ? '⛔ 已鎖定截單' : '🟢 已開放團員登記');
-    }
+      window.state.isOrderLocked = !window.state.isOrderLocked;
+      window.saveState();
+      window.renderAll();
+      window.showToast(window.state.isOrderLocked ? '⛔ 已鎖定截單' : '🟢 已開放團員登記');
+    };
 
-    function updateHeaderBadges() {
+    window.updateHeaderBadges = function() {
       const lockBtn = document.getElementById('lockBadgeBtn');
-      if (state.isUnlocked) {
+      if (window.state.isUnlocked) {
         lockBtn.className = 'badge-btn badge-unlock';
         lockBtn.textContent = '🔓 導遊已解鎖(點此上鎖)';
       } else {
@@ -1082,7 +1133,7 @@
       }
 
       const orderBtn = document.getElementById('orderLockBtn');
-      if (state.isOrderLocked) {
+      if (window.state.isOrderLocked) {
         orderBtn.className = 'badge-btn badge-closed';
         orderBtn.textContent = '⛔ 已截單鎖定';
       } else {
@@ -1090,12 +1141,12 @@
         orderBtn.textContent = '🟢 開放登記中';
       }
 
-      document.getElementById('closedBanner').style.display = state.isOrderLocked ? 'block' : 'none';
-      document.getElementById('orderCountBadge').textContent = state.orders.length;
-    }
+      document.getElementById('closedBanner').style.display = window.state.isOrderLocked ? 'block' : 'none';
+      document.getElementById('orderCountBadge').textContent = window.state.orders.length;
+    };
 
     // ==================== 價格與優惠計算 ====================
-    function calcItemTotal(product, qty) {
+    window.calcItemTotal = function(product, qty) {
       if (qty <= 0) return 0;
       const p = Number(product.price);
       const x = Number(product.promoX);
@@ -1114,10 +1165,10 @@
         return paidUnits * p;
       }
       return qty * p;
-    }
+    };
 
-    function formatPromoLabel(p) {
-      const sym = state.currencySymbol;
+    window.formatPromoLabel = function(p) {
+      const sym = window.state.currencySymbol;
       if (p.promoType === 'bundle' && p.promoX > 0) {
         return `🔥 ${p.promoX} 件特價 ${sym}${Number(p.promoY).toLocaleString()}`;
       }
@@ -1125,26 +1176,26 @@
         return `🎁 買 ${p.promoX} 送 ${p.promoY}`;
       }
       return '';
-    }
+    };
 
     // ==================== 畫面渲染 ====================
-    function renderAll() {
-      updateHeaderBadges();
-      renderMemberProducts();
-      updateBottomTotal();
-      renderGuideDashboard();
-      renderAdminProducts();
-    }
+    window.renderAll = function() {
+      window.updateHeaderBadges();
+      window.renderMemberProducts();
+      window.updateBottomTotal();
+      window.renderGuideDashboard();
+      window.renderAdminProducts();
+    };
 
-    function renderMemberProducts() {
+    window.renderMemberProducts = function() {
       const container = document.getElementById('memberProductList');
-      const sym = state.currencySymbol;
-      const isForeign = state.currencyCode !== 'TWD';
+      const sym = window.state.currencySymbol;
+      const isForeign = window.state.currencyCode !== 'TWD';
 
-      container.innerHTML = state.products.map(p => {
-        const qty = state.cart[p.id] || 0;
-        const promoText = formatPromoLabel(p);
-        const twdPrice = Math.round(p.price * state.exchangeRate).toLocaleString();
+      container.innerHTML = window.state.products.map(p => {
+        const qty = window.state.cart[p.id] || 0;
+        const promoText = window.formatPromoLabel(p);
+        const twdPrice = Math.round(p.price * window.state.exchangeRate).toLocaleString();
         const mediaHtml = p.image
           ? `<img src="${p.image}" alt="${p.name}" onclick="previewPhoto('${p.image}', '${p.name}')" />`
           : `<span>${p.icon || '🎁'}</span>`;
@@ -1173,129 +1224,130 @@
           </div>
         `;
       }).join('');
-    }
+    };
 
-    function changeQty(prodId, delta) {
-      if (state.isOrderLocked) {
-        showToast('⛔ 目前已結單鎖定，請洽導遊');
+    window.changeQty = function(prodId, delta) {
+      if (window.state.isOrderLocked) {
+        window.showToast('⛔ 目前已結單鎖定，請洽導遊');
         return;
       }
-      const cur = state.cart[prodId] || 0;
+      const cur = window.state.cart[prodId] || 0;
       const next = Math.max(0, cur + delta);
-      if (next === 0) delete state.cart[prodId];
-      else state.cart[prodId] = next;
+      if (next === 0) delete window.state.cart[prodId];
+      else window.state.cart[prodId] = next;
 
-      renderMemberProducts();
-      updateBottomTotal();
-    }
+      window.renderMemberProducts();
+      window.updateBottomTotal();
+    };
 
-    function updateBottomTotal() {
+    window.updateBottomTotal = function() {
       let totalQty = 0;
       let totalAmount = 0;
 
-      state.products.forEach(p => {
-        const qty = state.cart[p.id] || 0;
+      window.state.products.forEach(p => {
+        const qty = window.state.cart[p.id] || 0;
         totalQty += qty;
-        totalAmount += calcItemTotal(p, qty);
+        totalAmount += window.calcItemTotal(p, qty);
       });
 
       document.getElementById('totalQty').textContent = totalQty;
-      document.getElementById('totalAmountText').textContent = `${state.currencySymbol} ${totalAmount.toLocaleString()}`;
+      document.getElementById('totalAmountText').textContent = `${window.state.currencySymbol} ${totalAmount.toLocaleString()}`;
 
       const twdSub = document.getElementById('totalTwdSub');
-      if (state.currencyCode !== 'TWD' && totalAmount > 0) {
-        const twdTotal = Math.round(totalAmount * state.exchangeRate).toLocaleString();
+      if (window.state.currencyCode !== 'TWD' && totalAmount > 0) {
+        const twdTotal = Math.round(totalAmount * window.state.exchangeRate).toLocaleString();
         twdSub.style.display = 'block';
         twdSub.textContent = `約合台幣 NT$ ${twdTotal} 元`;
       } else {
         twdSub.style.display = 'none';
       }
-    }
+    };
 
-    function confirmResetCart() {
-      const hasItems = Object.values(state.cart).some(q => q > 0);
+    window.confirmResetCart = function() {
+      const hasItems = Object.values(window.state.cart).some(q => q > 0);
       if (!hasItems) {
-        showToast('目前購物車已經是空的囉');
+        window.showToast('目前購物車已經是空的囉');
         return;
       }
-      openConfirmModal('🔄 確定全部歸零？', '要把目前選擇的所有商品數量都清空重算嗎？', () => {
-        state.cart = {};
-        renderMemberProducts();
-        updateBottomTotal();
-        showToast('✅ 已將數量全部歸零');
+      window.openConfirmModal('🔄 確定全部歸零？', '要把目前選擇的所有商品數量都清空重算嗎？', () => {
+        window.state.cart = {};
+        window.renderMemberProducts();
+        window.updateBottomTotal();
+        window.showToast('✅ 已將數量全部歸零');
       });
-    }
+    };
 
-    function openCheckoutModal() {
-      if (state.isOrderLocked) {
-        showToast('⛔ 本團已結單鎖定');
+    window.openCheckoutModal = function() {
+      if (window.state.isOrderLocked) {
+        window.showToast('⛔ 本團已結單鎖定');
         return;
       }
       const name = document.getElementById('buyerName').value.trim();
       const seat = document.getElementById('buyerSeat').value.trim();
       if (!name || !seat) {
-        showToast('⚠️ 請先填寫「姓名」與「座位號碼」');
+        window.showToast('⚠️ 請先填寫「姓名」與「座位號碼」');
         return;
       }
 
       const items = [];
       let totalAmount = 0;
-      state.products.forEach(p => {
-        const qty = state.cart[p.id] || 0;
+      window.state.products.forEach(p => {
+        const qty = window.state.cart[p.id] || 0;
         if (qty > 0) {
-          const sub = calcItemTotal(p, qty);
+          const sub = window.calcItemTotal(p, qty);
           items.push({ name: p.name, qty, subtotal: sub });
           totalAmount += sub;
         }
       });
 
       if (items.length === 0) {
-        showToast('⚠️ 您還沒有選擇任何土產喔');
+        window.showToast('⚠️ 您還沒有選擇任何土產喔');
         return;
       }
 
-      const sym = state.currencySymbol;
-      const twdStr = state.currencyCode !== 'TWD'
-        ? `<div style="color:#047857; font-weight:900; margin-top:6px;">約合台幣：NT$ ${Math.round(totalAmount * state.exchangeRate).toLocaleString()} 元</div>`
+      const sym = window.state.currencySymbol;
+      const twdStr = window.state.currencyCode !== 'TWD'
+        ? `<div style="color:#047857; font-weight:900; margin-top:6px;">約合台幣：NT$ ${Math.round(totalAmount * window.state.exchangeRate).toLocaleString()} 元</div>`
         : '';
 
       const listHtml = items.map(i => `<div>• ${i.name} × <b>${i.qty}</b>（${sym}${i.subtotal.toLocaleString()}）</div>`).join('');
 
-      openConfirmModal(
+      window.openConfirmModal(
         '📋 確認您的訂購明細',
         `<div><b>訂購人：</b>${name}（座位：${seat}）</div>
          <div style="margin:12px 0; padding:12px; background:#f8fafc; border-radius:12px;">${listHtml}</div>
          <div style="font-size:24px; font-weight:900; color:#b45309;">總計：${sym} ${totalAmount.toLocaleString()}</div>
          ${twdStr}`,
         () => {
-          state.orders.unshift({
+          window.state.orders.unshift({
             id: Date.now().toString(),
             name,
             seat,
             items,
             totalAmount,
             currencySymbol: sym,
-            twdAmount: Math.round(totalAmount * state.exchangeRate),
+            twdAmount: Math.round(totalAmount * window.state.exchangeRate),
             paid: false
           });
-          state.cart = {};
-          saveState();
-          renderAll();
-          showToast('🎉 登記成功！感謝您的訂購');
+          window.state.cart = {};
+          window.saveState();
+          window.renderAll();
+          window.showToast('🎉 登記成功！已同步至導遊雲端總表');
         }
       );
-    }
+    };
 
     // ==================== 導遊總表與收款 ====================
-    function renderGuideDashboard() {
+    window.renderGuideDashboard = function() {
       const summaryMap = {};
       let grandTotal = 0;
       let grandTwd = 0;
 
-      state.orders.forEach(o => {
+      window.state.orders.forEach(o => {
         grandTotal += o.totalAmount;
         grandTwd += o.twdAmount;
-        o.items.forEach(it => {
+        const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
+        orderItems.forEach(it => {
           summaryMap[it.name] = (summaryMap[it.name] || 0) + it.qty;
         });
       });
@@ -1312,16 +1364,18 @@
           </div>`
         ).join('') +
         `<div style="margin-top:12px; font-weight:900; color:#0f172a;">
-          全車總金額：${state.currencySymbol} ${grandTotal.toLocaleString()}
-          ${state.currencyCode !== 'TWD' ? `（約 NT$ ${grandTwd.toLocaleString()}）` : ''}
+          全車總金額：${window.state.currencySymbol} ${grandTotal.toLocaleString()}
+          ${window.state.currencyCode !== 'TWD' ? `（約 NT$ ${grandTwd.toLocaleString()}）` : ''}
         </div>`;
       }
 
       const orderEl = document.getElementById('orderList');
-      if (state.orders.length === 0) {
+      if (window.state.orders.length === 0) {
         orderEl.innerHTML = '<div style="color:#64748b;">尚無個人帳單紀錄。</div>';
       } else {
-        orderEl.innerHTML = state.orders.map(o => `
+        orderEl.innerHTML = window.state.orders.map(o => {
+          const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
+          return `
           <div class="order-item" style="border-color:${o.paid ? '#16a34a' : '#cbd5e1'}; background:${o.paid ? '#f0fdf4' : '#f8fafc'};">
             <div class="order-header">
               <div class="order-buyer">💺 ${o.seat} ｜ ${o.name}</div>
@@ -1330,76 +1384,81 @@
               </button>
             </div>
             <div style="margin-bottom:8px;">
-              ${o.items.map(i => `• ${i.name} × ${i.qty}`).join('<br>')}
+              ${orderItems.map(i => `• ${i.name} × ${i.qty}`).join('<br>')}
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <strong style="font-size:22px; color:#b45309;">應收：${o.currencySymbol} ${o.totalAmount.toLocaleString()}</strong>
               <button class="btn btn-danger" style="width:auto; min-height:44px; padding:6px 12px;" onclick="deleteOrder('${o.id}')">刪除</button>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
-    }
+    };
 
-    function togglePaid(orderId) {
-      const target = state.orders.find(o => o.id === orderId);
+    window.togglePaid = function(orderId) {
+      const target = window.state.orders.find(o => o.id === orderId);
       if (target) {
         target.paid = !target.paid;
-        saveState();
-        renderGuideDashboard();
+        window.saveState();
+        window.renderGuideDashboard();
       }
-    }
+    };
 
-    function deleteOrder(orderId) {
-      openConfirmModal('🗑️ 刪除這筆訂單？', '刪除後無法復原，確定要刪除嗎？', () => {
-        state.orders = state.orders.filter(o => o.id !== orderId);
-        saveState();
-        renderAll();
-        showToast('已刪除該筆訂單');
+    window.deleteOrder = function(orderId) {
+      window.openConfirmModal('🗑️ 刪除這筆訂單？', '刪除後無法復原，確定要刪除嗎？', () => {
+        window.state.orders = window.state.orders.filter(o => o.id !== orderId);
+        window.saveState();
+        window.renderAll();
+        window.showToast('已刪除該筆訂單');
       });
-    }
+    };
 
-    function confirmClearAllOrders() {
-      if (state.orders.length === 0) return;
-      openConfirmModal('⚠️ 清空全車所有訂單？', '這會清除目前所有團員的登記紀錄，確定要清空嗎？', () => {
-        state.orders = [];
-        saveState();
-        renderAll();
-        showToast('已清空所有訂單');
+    window.confirmClearAllOrders = function() {
+      if (window.state.orders.length === 0) return;
+      window.openConfirmModal('⚠️ 清空全車所有訂單？', '這會清除目前所有團員的登記紀錄，確定要清空嗎？', () => {
+        window.state.orders = [];
+        window.saveState();
+        window.renderAll();
+        window.showToast('已清空所有訂單');
       });
-    }
+    };
 
-    function copySummaryToClipboard() {
-      if (state.orders.length === 0) {
-        showToast('目前沒有訂單可複製');
+    window.copySummaryToClipboard = function() {
+      if (window.state.orders.length === 0) {
+        window.showToast('目前沒有訂單可複製');
         return;
       }
       const summaryMap = {};
-      state.orders.forEach(o => o.items.forEach(i => summaryMap[i.name] = (summaryMap[i.name] || 0) + i.qty));
+      window.state.orders.forEach(o => {
+        const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
+        orderItems.forEach(i => summaryMap[i.name] = (summaryMap[i.name] || 0) + i.qty);
+      });
       let text = '🚌【本團伴手禮統計總表】\n';
       Object.entries(summaryMap).forEach(([k, v]) => { text += `• ${k}：${v} 件\n`; });
       text += '\n🧾【團員明細】\n';
-      state.orders.forEach(o => {
-        const itemsStr = o.items.map(i => `${i.name}x${i.qty}`).join('、');
+      window.state.orders.forEach(o => {
+        const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
+        const itemsStr = orderItems.map(i => `${i.name}x${i.qty}`).join('、');
         text += `[${o.seat}] ${o.name}：${itemsStr}（${o.currencySymbol}${o.totalAmount}）${o.paid ? '✅已付' : '⏳未付'}\n`;
       });
-      navigator.clipboard.writeText(text).then(() => showToast('📋 已複製統計文字，可直接貼上 LINE！'));
-    }
+      navigator.clipboard.writeText(text).then(() => window.showToast('📋 已複製統計文字，可直接貼上 LINE！'));
+    };
 
     // ==================== 商品與密碼設定 ====================
-    function renderIconGrid() {
+    window.renderIconGrid = function() {
       const grid = document.getElementById('iconGrid');
       grid.innerHTML = ICONS.map(ic => `
-        <div class="icon-choice ${state.selectedIcon === ic ? 'selected' : ''}" onclick="selectIcon('${ic}')">${ic}</div>
+        <div class="icon-choice ${window.state.selectedIcon === ic ? 'selected' : ''}" onclick="selectIcon('${ic}')">${ic}</div>
       `).join('');
-    }
+    };
 
-    function selectIcon(ic) {
-      state.selectedIcon = ic;
-      renderIconGrid();
-    }
+    window.selectIcon = function(ic) {
+      window.state.selectedIcon = ic;
+      window.renderIconGrid();
+    };
 
-    function togglePromoFields() {
+    window.togglePromoFields = function() {
       const type = document.getElementById('prodPromoType').value;
       const box = document.getElementById('promoDetailFields');
       if (type === 'none') {
@@ -1409,9 +1468,9 @@
         document.getElementById('promoParam1Label').textContent = type === 'bundle' ? '滿幾件' : '買幾件';
         document.getElementById('promoParam2Label').textContent = type === 'bundle' ? '特價總金額' : '送幾件';
       }
-    }
+    };
 
-    function handleImageUpload(event) {
+    window.handleImageUpload = function(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -1426,21 +1485,21 @@
           canvas.width = w;
           canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          state.uploadedImage = canvas.toDataURL('image/jpeg', 0.8);
-          document.getElementById('imagePreview').src = state.uploadedImage;
+          window.state.uploadedImage = canvas.toDataURL('image/jpeg', 0.8);
+          document.getElementById('imagePreview').src = window.state.uploadedImage;
           document.getElementById('imagePreviewWrap').style.display = 'block';
         };
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
-    }
+    };
 
-    function clearUploadedImage() {
-      state.uploadedImage = '';
+    window.clearUploadedImage = function() {
+      window.state.uploadedImage = '';
       document.getElementById('imagePreviewWrap').style.display = 'none';
-    }
+    };
 
-    function saveProduct() {
+    window.saveProduct = function() {
       const name = document.getElementById('prodName').value.trim();
       const desc = document.getElementById('prodDesc').value.trim();
       const price = parseFloat(document.getElementById('prodPrice').value);
@@ -1450,7 +1509,7 @@
       const editId = document.getElementById('editProductId').value;
 
       if (!name || isNaN(price) || price <= 0) {
-        showToast('⚠️ 請輸入正確的商品名稱與單價');
+        window.showToast('⚠️ 請輸入正確的商品名稱與單價');
         return;
       }
 
@@ -1462,26 +1521,26 @@
         promoType,
         promoX,
         promoY,
-        icon: state.selectedIcon,
-        image: state.uploadedImage
+        icon: window.state.selectedIcon,
+        image: window.state.uploadedImage
       };
 
       if (editId) {
-        const idx = state.products.findIndex(p => p.id === editId);
-        if (idx > -1) state.products[idx] = itemData;
-        showToast('✅ 商品已更新');
+        const idx = window.state.products.findIndex(p => p.id === editId);
+        if (idx > -1) window.state.products[idx] = itemData;
+        window.showToast('✅ 商品已更新並同步雲端');
       } else {
-        state.products.push(itemData);
-        showToast('✅ 已新增上架土產');
+        window.state.products.push(itemData);
+        window.showToast('✅ 已新增上架土產並同步雲端');
       }
 
-      resetProductForm();
-      saveState();
-      renderAll();
-    }
+      window.resetProductForm();
+      window.saveState();
+      window.renderAll();
+    };
 
-    function editProduct(id) {
-      const p = state.products.find(item => item.id === id);
+    window.editProduct = function(id) {
+      const p = window.state.products.find(item => item.id === id);
       if (!p) return;
       document.getElementById('editorTitle').textContent = '✏️ 編輯土產商品';
       document.getElementById('editProductId').value = p.id;
@@ -1491,92 +1550,92 @@
       document.getElementById('prodPromoType').value = p.promoType;
       document.getElementById('prodPromoX').value = p.promoX || 3;
       document.getElementById('prodPromoY').value = p.promoY || 1000;
-      togglePromoFields();
-      state.selectedIcon = p.icon || '🍍';
-      state.uploadedImage = p.image || '';
-      if (state.uploadedImage) {
-        document.getElementById('imagePreview').src = state.uploadedImage;
+      window.togglePromoFields();
+      window.state.selectedIcon = p.icon || '🍍';
+      window.state.uploadedImage = p.image || '';
+      if (window.state.uploadedImage) {
+        document.getElementById('imagePreview').src = window.state.uploadedImage;
         document.getElementById('imagePreviewWrap').style.display = 'block';
       } else {
         document.getElementById('imagePreviewWrap').style.display = 'none';
       }
-      renderIconGrid();
+      window.renderIconGrid();
       document.getElementById('productEditorCard').scrollIntoView({ behavior: 'smooth' });
-    }
+    };
 
-    function resetProductForm() {
+    window.resetProductForm = function() {
       document.getElementById('editorTitle').textContent = '➕ 新增上架土產';
       document.getElementById('editProductId').value = '';
       document.getElementById('prodName').value = '';
       document.getElementById('prodDesc').value = '';
       document.getElementById('prodPrice').value = '';
       document.getElementById('prodPromoType').value = 'none';
-      togglePromoFields();
-      clearUploadedImage();
-    }
+      window.togglePromoFields();
+      window.clearUploadedImage();
+    };
 
-    function deleteProduct(id) {
-      openConfirmModal('🗑️ 下架刪除此商品？', '確定要從清單中移除這項土產嗎？', () => {
-        state.products = state.products.filter(p => p.id !== id);
-        delete state.cart[id];
-        saveState();
-        renderAll();
-        showToast('已刪除商品');
+    window.deleteProduct = function(id) {
+      window.openConfirmModal('🗑️ 下架刪除此商品？', '確定要從清單中移除這項土產嗎？', () => {
+        window.state.products = window.state.products.filter(p => p.id !== id);
+        delete window.state.cart[id];
+        window.saveState();
+        window.renderAll();
+        window.showToast('已刪除商品');
       });
-    }
+    };
 
-    function renderAdminProducts() {
+    window.renderAdminProducts = function() {
       const el = document.getElementById('adminProductList');
-      el.innerHTML = state.products.map(p => `
+      el.innerHTML = window.state.products.map(p => `
         <div class="order-item">
           <div style="font-weight:900; font-size:22px; margin-bottom:4px;">
-            ${p.icon || '🎁'} ${p.name}（${state.currencySymbol}${p.price}）
+            ${p.icon || '🎁'} ${p.name}（${window.state.currencySymbol}${p.price}）
           </div>
-          <div style="color:#b91c1c; font-weight:800; margin-bottom:10px;">${formatPromoLabel(p) || '無組合優惠'}</div>
+          <div style="color:#b91c1c; font-weight:800; margin-bottom:10px;">${window.formatPromoLabel(p) || '無組合優惠'}</div>
           <div class="btn-row">
             <button class="btn btn-outline" style="min-height:48px;" onclick="editProduct('${p.id}')">✏️ 編輯</button>
             <button class="btn btn-danger" style="min-height:48px;" onclick="deleteProduct('${p.id}')">🗑️ 刪除</button>
           </div>
         </div>
       `).join('');
-    }
+    };
 
-    function confirmApplyPreset(key) {
-      openConfirmModal('🗺️ 套用路線範本？', '套用後會替換目前的商品清單與幣別設定，確定要套用嗎？', () => {
-        applyPresetData(key, true);
-        showToast('✅ 已套用旅遊路線範本');
+    window.confirmApplyPreset = function(key) {
+      window.openConfirmModal('🗺️ 套用路線範本？', '套用後會替換目前的商品清單與幣別設定，確定要套用嗎？', () => {
+        window.applyPresetData(key, true);
+        window.showToast('✅ 已套用旅遊路線範本');
       });
-    }
+    };
 
-    function applyPresetData(key, triggerRateFetch) {
+    window.applyPresetData = function(key, triggerRateFetch) {
       const preset = PRESETS[key];
-      state.currencyCode = preset.code;
-      state.currencySymbol = preset.symbol;
-      state.exchangeRate = preset.rate;
-      state.products = JSON.parse(JSON.stringify(preset.products));
-      state.cart = {};
-      syncCurrencyUI();
-      saveState();
-      renderAll();
+      window.state.currencyCode = preset.code;
+      window.state.currencySymbol = preset.symbol;
+      window.state.exchangeRate = preset.rate;
+      window.state.products = JSON.parse(JSON.stringify(preset.products));
+      window.state.cart = {};
+      window.syncCurrencyUI();
+      window.saveState();
+      window.renderAll();
       if (triggerRateFetch && preset.code !== 'TWD') {
-        fetchLiveExchangeRate();
+        window.fetchLiveExchangeRate();
       }
-    }
+    };
 
-    function changeGuidePassword() {
+    window.changeGuidePassword = function() {
       const newPwd = document.getElementById('newPasswordInput').value.trim();
       if (newPwd.length < 4 || newPwd.length > 8) {
-        showToast('⚠️ 請輸入 4 到 8 碼的新密碼');
+        window.showToast('⚠️ 請輸入 4 到 8 碼的新密碼');
         return;
       }
-      state.guidePassword = newPwd;
+      window.state.guidePassword = newPwd;
       document.getElementById('newPasswordInput').value = '';
-      saveState();
-      showToast('🔑 導遊管理密碼已更新！');
-    }
+      window.saveState();
+      window.showToast('🔑 導遊管理密碼已更新！');
+    };
 
     // ==================== 通用彈窗 ====================
-    function openConfirmModal(title, bodyHtml, onConfirm) {
+    window.openConfirmModal = function(title, bodyHtml, onConfirm) {
       const modal = document.getElementById('customModal');
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalBody').innerHTML = bodyHtml;
@@ -1587,25 +1646,26 @@
       `;
       modal.classList.add('open');
       document.getElementById('modalOkBtn').onclick = () => {
-        closeModal();
+        window.closeModal();
         onConfirm();
       };
-    }
+    };
 
-    function previewPhoto(src, title) {
+    window.previewPhoto = function(src, title) {
       const modal = document.getElementById('customModal');
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalBody').innerHTML = `<img src="${src}" style="width:100%; border-radius:14px;" />`;
       document.getElementById('modalExtra').innerHTML = '';
       document.getElementById('modalActions').innerHTML = `<button class="btn btn-primary" style="grid-column:1/-1;" onclick="closeModal()">關閉預覽</button>`;
       modal.classList.add('open');
-    }
+    };
 
-    function closeModal() {
+    window.closeModal = function() {
       document.getElementById('customModal').classList.remove('open');
-    }
+    };
 
-    initApp();
+    // 啟動應用程式
+    window.initApp();
   </script>
 </body>
 </html>
