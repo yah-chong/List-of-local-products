@@ -13,8 +13,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#18202c" />
 
-  <!-- 精緻旅遊伴手禮專屬 App 向量圖示 (支援 Android 桌面與瀏覽器分頁) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%231e293b'/%3E%3Cstop offset='100%25' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3ClinearGradient id='bag' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23fbbf24'/%3E%3Cstop offset='100%25' stop-color='%23d97706'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23bg)'/%3E%3Ccircle cx='390' cy='115' r='44' fill='%23f59e0b' opacity='0.25'/%3E%3Ccircle cx='390' cy='115' r='26' fill='%23fbbf24'/%3E%3Cpath d='M188 180 V145 A68 68 0 0 1 324 145 V180' fill='none' stroke='%23fef3c7' stroke-width='24' stroke-linecap='round'/%3E%3Crect x='116' y='175' width='280' height='245' rx='36' fill='url(%23bag)'/%3E%3Crect x='234' y='175' width='44' height='245' fill='%23dc2626'/%3E%3Cpath d='M256 175 C215 135 170 165 215 195 L256 195 L297 195 C342 165 297 135 256 175 Z' fill='%23ef4444'/%3E%3Ccircle cx='370' cy='370' r='74' fill='%2310b981' stroke='%23ffffff' stroke-width='12'/%3E%3Crect x='330' y='342' width='80' height='48' rx='10' fill='%23ffffff'/%3E%3Crect x='338' y='350' width='28' height='18' rx='4' fill='%230f172a'/%3E%3Crect x='374' y='350' width='28' height='18' rx='4' fill='%230f172a'/%3E%3Ccircle cx='346' cy='394' r='9' fill='%230f172a'/%3E%3Ccircle cx='394' cy='394' r='9' fill='%230f172a'/%3E%3C/svg%3E" />
+  <!-- =========================================================
+       【精緻旅遊伴手禮專屬 App 圖示】
+       「溫暖手作」禮物盒 Logo 圖案 (Base64 PNG)
+  ========================================================= -->
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" />
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" />
 
   <style>
     :root {
@@ -82,6 +86,7 @@
       width: 36px;
       height: 36px;
       border-radius: 9px;
+      object-fit: cover;
       flex-shrink: 0;
     }
 
@@ -598,24 +603,13 @@
   <header>
     <div class="header-top">
       <div class="app-title">
-        <!-- 內嵌精緻伴手禮 Logo 圖示 -->
-        <svg class="app-logo-mini" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="hdrBag" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fbbf24"/>
-              <stop offset="100%" stop-color="#d97706"/>
-            </linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="112" fill="#252f3f"/>
-          <path d="M188 180 V145 A68 68 0 0 1 324 145 V180" fill="none" stroke="#fef3c7" stroke-width="28" stroke-linecap="round"/>
-          <rect x="116" y="175" width="280" height="245" rx="36" fill="url(#hdrBag)"/>
-          <rect x="234" y="175" width="44" height="245" fill="#dc2626"/>
-          <path d="M256 175 C215 135 170 165 215 195 L256 195 L297 195 C342 165 297 135 256 175 Z" fill="#ef4444"/>
-          <circle cx="370" cy="370" r="76" fill="#10b981" stroke="#18202c" stroke-width="14"/>
-          <rect x="330" y="342" width="80" height="48" rx="10" fill="#ffffff"/>
-          <rect x="338" y="350" width="28" height="18" rx="4" fill="#0f172a"/>
-          <rect x="374" y="350" width="28" height="18" rx="4" fill="#0f172a"/>
-        </svg>
+        <!-- 內嵌「溫暖手作」禮物盒 Logo 圖示 -->
+        <img
+          id="headerLogoImg"
+          class="app-logo-mini"
+          alt="伴手禮團購 Logo"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        />
         <span>伴手禮團購</span>
       </div>
       <div class="sync-badge" id="cloudSyncBadge">☁️ 連線中...</div>
@@ -857,7 +851,93 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
     import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
 
-    // 1. 初始化 Firebase (已自動配置您的 tour-shop 專案資訊)
+    // 繪製「溫暖手作」禮物盒 Logo (珊瑚橘漸層 + 奶油白盒身 + 淺金黃緞帶與微笑弧度 + 鏤空愛心)
+    function generateWarmHandmadeLogoDataUrl() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // 圓角方形背景（珊瑚橘 #FF6B6B 到淺粉漸層）
+      const bgGrad = ctx.createLinearGradient(0, 0, 512, 512);
+      bgGrad.addColorStop(0, '#FF6B6B');
+      bgGrad.addColorStop(1, '#FFB3B3');
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(0, 0, 512, 512, 112);
+      ctx.clip();
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 微微傾斜的禮物盒底座（奶油白 #FFF5E6 + 珊瑚橘陰影面）
+      ctx.translate(256, 268);
+      ctx.rotate(-0.14);
+
+      // 盒身左側（奶油白）
+      ctx.fillStyle = '#FFF5E6';
+      ctx.beginPath();
+      ctx.roundRect(-125, -45, 125, 130, 18);
+      ctx.fill();
+
+      // 盒身右側（溫和珊瑚橘）
+      ctx.fillStyle = '#FA8072';
+      ctx.beginPath();
+      ctx.roundRect(0, -45, 125, 130, 18);
+      ctx.fill();
+
+      // 盒蓋（珊瑚橘 #FF6B6B）
+      ctx.fillStyle = '#FF6B6B';
+      ctx.beginPath();
+      ctx.roundRect(-140, -95, 280, 62, 18);
+      ctx.fill();
+
+      // 淺金黃緞帶 (#FFD166) 垂直與水平帶
+      ctx.fillStyle = '#FFD166';
+      ctx.fillRect(-20, -95, 40, 180);
+      ctx.fillRect(-140, -74, 280, 22);
+
+      // 蝴蝶結
+      ctx.beginPath();
+      ctx.ellipse(-42, -108, 36, 20, -0.25, 0, Math.PI * 2);
+      ctx.ellipse(42, -108, 36, 20, 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -106, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 蓋子上的鏤空愛心（透出背景色）
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.moveTo(0, -52);
+      ctx.bezierCurveTo(-18, -72, -46, -54, -24, -34);
+      ctx.lineTo(0, -16);
+      ctx.lineTo(24, -34);
+      ctx.bezierCurveTo(46, -54, 18, -72, 0, -52);
+      ctx.fill();
+      ctx.restore();
+
+      // 緞帶延伸形成的微笑弧度
+      ctx.strokeStyle = '#FFD166';
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(0, 10, 58, 0.25 * Math.PI, 0.75 * Math.PI);
+      ctx.stroke();
+
+      ctx.restore();
+      return canvas.toDataURL('image/png');
+    }
+
+    const warmLogoUrl = generateWarmHandmadeLogoDataUrl();
+    const headerLogoImg = document.getElementById('headerLogoImg');
+    if (headerLogoImg) headerLogoImg.src = warmLogoUrl;
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
+      link.href = warmLogoUrl;
+    });
+
+    // 1. 初始化 Firebase
     const firebaseConfig = {
       apiKey: "0zzNggCalIRZchMk2gtVr3u5gngPvIxTvLj7om7u",
       authDomain: "tour-shop-85441.firebaseapp.com",
