@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   
-  <!-- 手機桌面捷徑名稱：統一顯示為「伴手禮團購」 -->
+  <!-- 手機桌面捷徑名稱 -->
   <title>伴手禮團購</title>
   <meta name="application-name" content="伴手禮團購" />
   <meta name="apple-mobile-web-app-title" content="伴手禮團購" />
@@ -13,12 +13,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#18202c" />
 
-  <!-- =========================================================
-       【精緻旅遊伴手禮專屬 App 圖示】
-       「溫暖手作」禮物盒 Logo 圖案 (Base64 PNG)
-  ========================================================= -->
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" />
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" />
+  <!-- 專屬 App 向量圖示 -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%231e293b'/%3E%3Cstop offset='100%25' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3ClinearGradient id='bag' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23fbbf24'/%3E%3Cstop offset='100%25' stop-color='%23d97706'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23bg)'/%3E%3Ccircle cx='390' cy='115' r='44' fill='%23f59e0b' opacity='0.25'/%3E%3Ccircle cx='390' cy='115' r='26' fill='%23fbbf24'/%3E%3Cpath d='M188 180 V145 A68 68 0 0 1 324 145 V180' fill='none' stroke='%23fef3c7' stroke-width='24' stroke-linecap='round'/%3E%3Crect x='116' y='175' width='280' height='245' rx='36' fill='url(%23bag)'/%3E%3Crect x='234' y='175' width='44' height='245' fill='%23dc2626'/%3E%3Cpath d='M256 175 C215 135 170 165 215 195 L256 195 L297 195 C342 165 297 135 256 175 Z' fill='%23ef4444'/%3E%3Ccircle cx='370' cy='370' r='74' fill='%2310b981' stroke='%23ffffff' stroke-width='12'/%3E%3Crect x='330' y='342' width='80' height='48' rx='10' fill='%23ffffff'/%3E%3Crect x='338' y='350' width='28' height='18' rx='4' fill='%230f172a'/%3E%3Crect x='374' y='350' width='28' height='18' rx='4' fill='%230f172a'/%3E%3Ccircle cx='346' cy='394' r='9' fill='%230f172a'/%3E%3Ccircle cx='394' cy='394' r='9' fill='%230f172a'/%3E%3C/svg%3E" />
 
   <style>
     :root {
@@ -53,7 +49,6 @@
       padding-bottom: 130px;
     }
 
-    /* 頂部導覽列 */
     header {
       background-color: var(--bg-header);
       color: #ffffff;
@@ -86,7 +81,6 @@
       width: 36px;
       height: 36px;
       border-radius: 9px;
-      object-fit: cover;
       flex-shrink: 0;
     }
 
@@ -148,7 +142,6 @@
       color: #ffffff;
     }
 
-    /* 三大分頁 */
     .nav-tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -191,7 +184,6 @@
       margin-left: 2px;
     }
 
-    /* 主內容區 */
     .container {
       max-width: 680px;
       margin: 0 auto;
@@ -338,7 +330,6 @@
       margin-top: 6px;
     }
 
-    /* 團員商品卡片 */
     .product-card {
       background-color: #ffffff;
       border-radius: var(--radius-lg);
@@ -461,7 +452,6 @@
       font-weight: 900;
     }
 
-    /* 底部結帳欄 */
     .bottom-bar {
       position: fixed;
       bottom: 0;
@@ -494,7 +484,6 @@
       color: #fbbf24;
     }
 
-    /* 導遊訂單項目 */
     .order-item {
       border: 2px solid #cbd5e1;
       border-radius: var(--radius-md);
@@ -516,7 +505,6 @@
       font-weight: 900;
     }
 
-    /* 彈窗 Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -556,7 +544,6 @@
       color: var(--text-sub);
     }
 
-    /* Toast 提示 */
     .toast {
       position: fixed;
       top: 90px;
@@ -603,13 +590,23 @@
   <header>
     <div class="header-top">
       <div class="app-title">
-        <!-- 內嵌「溫暖手作」禮物盒 Logo 圖示 -->
-        <img
-          id="headerLogoImg"
-          class="app-logo-mini"
-          alt="伴手禮團購 Logo"
-          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-        />
+        <svg class="app-logo-mini" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hdrBag" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fbbf24"/>
+              <stop offset="100%" stop-color="#d97706"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="112" fill="#252f3f"/>
+          <path d="M188 180 V145 A68 68 0 0 1 324 145 V180" fill="none" stroke="#fef3c7" stroke-width="28" stroke-linecap="round"/>
+          <rect x="116" y="175" width="280" height="245" rx="36" fill="url(#hdrBag)"/>
+          <rect x="234" y="175" width="44" height="245" fill="#dc2626"/>
+          <path d="M256 175 C215 135 170 165 215 195 L256 195 L297 195 C342 165 297 135 256 175 Z" fill="#ef4444"/>
+          <circle cx="370" cy="370" r="76" fill="#10b981" stroke="#18202c" stroke-width="14"/>
+          <rect x="330" y="342" width="80" height="48" rx="10" fill="#ffffff"/>
+          <rect x="338" y="350" width="28" height="18" rx="4" fill="#0f172a"/>
+          <rect x="374" y="350" width="28" height="18" rx="4" fill="#0f172a"/>
+        </svg>
         <span>伴手禮團購</span>
       </div>
       <div class="sync-badge" id="cloudSyncBadge">☁️ 連線中...</div>
@@ -692,6 +689,22 @@
 
     <!-- ==================== 3. 導遊商品與匯率設定分頁 ==================== -->
     <section id="sec-settings" class="section">
+      <!-- 多導遊分團連結管理 -->
+      <div class="card" style="background:#fffbeb; border-color:#f59e0b;">
+        <div class="card-title">🔗 本團專屬點單連結（多導遊分流）</div>
+        <div class="form-group">
+          <label class="form-label">目前團號代碼</label>
+          <div style="display:grid; grid-template-columns: 1fr auto; gap:8px;">
+            <input type="text" id="currentTourCodeInput" placeholder="例如：Kaohsiung01" />
+            <button type="button" class="btn btn-info" style="min-height:60px;" onclick="switchTourCode()">切換團號</button>
+          </div>
+          <div class="form-sub" style="margin-top:6px;">💡 更換團號可讓不同導遊或不同車次擁有完全獨立的商品與訂單。</div>
+        </div>
+        <button class="btn btn-primary" onclick="copyTourShareLink()">
+          📋 一鍵複製本團專屬分享連結
+        </button>
+      </div>
+
       <!-- 即時網路匯率設定 -->
       <div class="card">
         <div class="card-title">🪙 幣別與最新台幣匯率換算</div>
@@ -851,93 +864,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
     import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
 
-    // 繪製「溫暖手作」禮物盒 Logo (珊瑚橘漸層 + 奶油白盒身 + 淺金黃緞帶與微笑弧度 + 鏤空愛心)
-    function generateWarmHandmadeLogoDataUrl() {
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-
-      // 圓角方形背景（珊瑚橘 #FF6B6B 到淺粉漸層）
-      const bgGrad = ctx.createLinearGradient(0, 0, 512, 512);
-      bgGrad.addColorStop(0, '#FF6B6B');
-      bgGrad.addColorStop(1, '#FFB3B3');
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(0, 0, 512, 512, 112);
-      ctx.clip();
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, 512, 512);
-
-      // 微微傾斜的禮物盒底座（奶油白 #FFF5E6 + 珊瑚橘陰影面）
-      ctx.translate(256, 268);
-      ctx.rotate(-0.14);
-
-      // 盒身左側（奶油白）
-      ctx.fillStyle = '#FFF5E6';
-      ctx.beginPath();
-      ctx.roundRect(-125, -45, 125, 130, 18);
-      ctx.fill();
-
-      // 盒身右側（溫和珊瑚橘）
-      ctx.fillStyle = '#FA8072';
-      ctx.beginPath();
-      ctx.roundRect(0, -45, 125, 130, 18);
-      ctx.fill();
-
-      // 盒蓋（珊瑚橘 #FF6B6B）
-      ctx.fillStyle = '#FF6B6B';
-      ctx.beginPath();
-      ctx.roundRect(-140, -95, 280, 62, 18);
-      ctx.fill();
-
-      // 淺金黃緞帶 (#FFD166) 垂直與水平帶
-      ctx.fillStyle = '#FFD166';
-      ctx.fillRect(-20, -95, 40, 180);
-      ctx.fillRect(-140, -74, 280, 22);
-
-      // 蝴蝶結
-      ctx.beginPath();
-      ctx.ellipse(-42, -108, 36, 20, -0.25, 0, Math.PI * 2);
-      ctx.ellipse(42, -108, 36, 20, 0.25, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(0, -106, 16, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 蓋子上的鏤空愛心（透出背景色）
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.moveTo(0, -52);
-      ctx.bezierCurveTo(-18, -72, -46, -54, -24, -34);
-      ctx.lineTo(0, -16);
-      ctx.lineTo(24, -34);
-      ctx.bezierCurveTo(46, -54, 18, -72, 0, -52);
-      ctx.fill();
-      ctx.restore();
-
-      // 緞帶延伸形成的微笑弧度
-      ctx.strokeStyle = '#FFD166';
-      ctx.lineWidth = 10;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.arc(0, 10, 58, 0.25 * Math.PI, 0.75 * Math.PI);
-      ctx.stroke();
-
-      ctx.restore();
-      return canvas.toDataURL('image/png');
-    }
-
-    const warmLogoUrl = generateWarmHandmadeLogoDataUrl();
-    const headerLogoImg = document.getElementById('headerLogoImg');
-    if (headerLogoImg) headerLogoImg.src = warmLogoUrl;
-    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = warmLogoUrl;
-    });
-
-    // 1. 初始化 Firebase
+    // 1. 初始化 Firebase 專案
     const firebaseConfig = {
       apiKey: "0zzNggCalIRZchMk2gtVr3u5gngPvIxTvLj7om7u",
       authDomain: "tour-shop-85441.firebaseapp.com",
@@ -947,7 +874,20 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 2. 狀態與預設資料（掛載在 window 確保全域讀取）
+    // 2. 從網址動態讀取 ?tour= 團號（無參數時預設為 'default_tour'）
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentTourId = (urlParams.get('tour') || 'default_tour').trim();
+    
+    // 將當前團號填入設定輸入框
+    window.addEventListener('DOMContentLoaded', () => {
+      const codeInput = document.getElementById('currentTourCodeInput');
+      if (codeInput) codeInput.value = currentTourId;
+    });
+
+    // 指向 Firebase 中該團專屬的資料節點
+    const tourRef = ref(db, `tours/${currentTourId}`);
+
+    // 3. 狀態與預設資料
     const ICONS = ['🍍', '🥮', '🍵', '🍪', '🦑', '🥭', '🍫', '🍘', '🍯', '🥜', '🎁', '🛍️'];
 
     const PRESETS = {
@@ -991,9 +931,9 @@
       uploadedImage: ''
     };
 
-    // 3. 升級儲存邏輯：直接即時寫入 Firebase 雲端
+    // 4. 即時寫入該團專屬雲端路徑
     window.saveState = function() {
-      set(ref(db, 'tour_state'), {
+      set(tourRef, {
         currencyCode: window.state.currencyCode,
         currencySymbol: window.state.currencySymbol,
         exchangeRate: window.state.exchangeRate,
@@ -1003,16 +943,16 @@
         guidePassword: window.state.guidePassword
       }).catch((err) => {
         console.error('Firebase 寫入失敗:', err);
-        window.showToast('⚠️ 雲端同步失敗，請檢查網路或金鑰');
+        window.showToast('⚠️ 雲端同步失敗');
       });
     };
 
-    // 4. 監聽雲端資料，實現多人全自動即時同步
+    // 5. 監聽該團雲端資料
     window.initApp = function() {
-      onValue(ref(db, 'tour_state'), (snapshot) => {
+      onValue(tourRef, (snapshot) => {
         const syncBadge = document.getElementById('cloudSyncBadge');
         if (syncBadge) {
-          syncBadge.textContent = '☁️ 雲端同步中';
+          syncBadge.textContent = `☁️ 團號: ${currentTourId}`;
           syncBadge.style.color = '#34d399';
           syncBadge.style.borderColor = '#34d399';
         }
@@ -1045,16 +985,28 @@
         window.renderAll();
       }, (error) => {
         console.error('Firebase 讀取錯誤:', error);
-        const syncBadge = document.getElementById('cloudSyncBadge');
-        if (syncBadge) {
-          syncBadge.textContent = '⚠️ 離線/未連線';
-          syncBadge.style.color = '#f87171';
-          syncBadge.style.borderColor = '#f87171';
-        }
       });
     };
 
-    // ==================== 提示訊息 ====================
+    // 6. 多團切換與分享連結
+    window.switchTourCode = function() {
+      const newCode = document.getElementById('currentTourCodeInput').value.trim();
+      if (!newCode) {
+        window.showToast('⚠️ 請輸入有效的團號');
+        return;
+      }
+      const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?tour=' + encodeURIComponent(newCode);
+      window.location.href = newUrl;
+    };
+
+    window.copyTourShareLink = function() {
+      const shareUrl = window.location.href;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        window.showToast('📋 已複製本團專屬連結，可貼給團員點單！');
+      });
+    };
+
+    // ==================== 提示與匯率功能 ====================
     window.showToast = function(msg) {
       const el = document.getElementById('toastMsg');
       el.textContent = msg;
@@ -1063,7 +1015,6 @@
       window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
     };
 
-    // ==================== 網路即時匯率抓取 ====================
     window.syncCurrencyUI = function() {
       const sel = document.getElementById('currencySelect');
       const targetVal = `${window.state.currencyCode}|${window.state.currencySymbol}`;
@@ -1150,7 +1101,7 @@
         `💡 匯率試算：當地貨幣 ${sym}1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ ${twdExample} 元」`;
     };
 
-    // ==================== 密碼鎖與分頁切換 ====================
+    // ==================== 密碼與分頁切換 ====================
     window.switchTab = function(tab) {
       if (tab === 'member') {
         window.state.isUnlocked = false;
@@ -1552,7 +1503,7 @@
         const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
         orderItems.forEach(i => summaryMap[i.name] = (summaryMap[i.name] || 0) + i.qty);
       });
-      let text = '🚌【本團伴手禮統計總表】\n';
+      let text = `🚌【本團伴手禮統計總表】(團號: ${currentTourId})\n`;
       Object.entries(summaryMap).forEach(([k, v]) => { text += `• ${k}：${v} 件\n`; });
       text += '\n🧾【團員明細】\n';
       window.state.orders.forEach(o => {
@@ -1752,7 +1703,6 @@
       window.showToast('🔑 導遊管理密碼已更新！');
     };
 
-    // ==================== 通用彈窗 ====================
     window.openConfirmModal = function(title, bodyHtml, onConfirm) {
       const modal = document.getElementById('customModal');
       document.getElementById('modalTitle').textContent = title;
