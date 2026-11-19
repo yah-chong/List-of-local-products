@@ -779,6 +779,12 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-title">🧰 舊版資料遷移</div>
+        <div class="form-sub" style="margin-bottom:12px;">只在切換新版 Firebase Rules 前，登入導遊帳號並對每個既有團號執行一次。執行前請先備份 Realtime Database。</div>
+        <button class="btn btn-outline" onclick="migrateLegacyTourData()">🔄 遷移目前團號資料</button>
+      </div>
+
       <!-- 即時網路匯率設定 -->
       <div class="card">
         <div class="card-title">🪙 幣別與最新台幣匯率換算</div>
@@ -901,14 +907,15 @@
         <div id="adminProductList"></div>
       </div>
 
-      <!-- 變更導遊管理密碼 -->
+      <!-- Firebase Authentication 管理員帳號 -->
       <div class="card">
-        <div class="card-title">🔐 變更導遊管理密碼</div>
+        <div class="card-title">🔐 Firebase 導遊帳號</div>
         <div class="form-group">
-          <label class="form-label">輸入新密碼（4～8 碼）</label>
-          <input type="password" id="newPasswordInput" maxlength="8" placeholder="請輸入新密碼" />
+          <label class="form-label">變更登入密碼</label>
+          <div class="form-sub">導遊帳號請先在 Firebase Authentication 建立。登入密碼不會儲存在本頁或 Realtime Database。</div>
+          <input type="password" id="newPasswordInput" autocomplete="new-password" placeholder="新密碼至少 6 個字元" />
         </div>
-        <button class="btn btn-primary" onclick="changeGuidePassword()">🔑 儲存新密碼</button>
+        <button class="btn btn-primary" onclick="changeGuidePassword()">🔑 更新 Firebase 密碼</button>
       </div>
     </section>
   </main>
@@ -941,7 +948,8 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-    import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
+    import { getDatabase, ref, set, update, remove, push, get, onValue } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, updatePassword, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
 
     // 1. 初始化 Firebase 專案
     const firebaseConfig = {
@@ -952,17 +960,28 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
 
     // 2. 從網址動態讀取 ?tour= 團號（無參數時預設為 'default_tour'）
     const urlParams = new URLSearchParams(window.location.search);
-    const currentTourId = (urlParams.get('tour') || 'default_tour').trim();
+    const requestedTourId = (urlParams.get('tour') || 'default_tour').trim();
+    const currentTourId = /^[A-Za-z0-9_-]{1,48}$/.test(requestedTourId) ? requestedTourId : 'default_tour';
+    window.escapeHtml = function(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    };
     
     window.addEventListener('DOMContentLoaded', () => {
       const codeInput = document.getElementById('currentTourCodeInput');
       if (codeInput) codeInput.value = currentTourId;
     });
 
-    const tourRef = ref(db, `tours/${currentTourId}`);
+    const tourRoot = `tours/${currentTourId}`;
+    const publicRef = ref(db, `${tourRoot}/public`);
+    const ordersRef = ref(db, `${tourRoot}/privateOrders`);
+    let stopOrdersListener = null;
+    let publicDataLoaded = false;
 
     // 3. 狀態與預設資料
     const ICONS = ['🍍', '🥮', '🍵', '🍪', '🦑', '🥭', '🍫', '🍘', '🍯', '🥜', '🎁', '🛍️'];
@@ -1003,32 +1022,167 @@
       cart: {},
       orders: [],
       isOrderLocked: false,
-      guidePassword: '1234',
       isUnlocked: false,
       selectedIcon: '🍍',
       uploadedImage: ''
     };
 
-    // 4. 即時寫入該團專屬雲端路徑
+    // 公開商品與結單狀態；訂單存放在獨立且受保護的節點。
     window.saveState = function() {
-      set(tourRef, {
+      if (!window.state.isUnlocked) {
+        window.showToast('🔐 請先登入導遊帳號');
+        return Promise.resolve();
+      }
+      return set(publicRef, {
         currencyCode: window.state.currencyCode,
         currencySymbol: window.state.currencySymbol,
         exchangeRate: window.state.exchangeRate,
         roundUpTwd: window.state.roundUpTwd,
         products: window.state.products,
-        orders: window.state.orders,
-        isOrderLocked: window.state.isOrderLocked,
-        guidePassword: window.state.guidePassword
+        isOrderLocked: window.state.isOrderLocked
       }).catch((err) => {
         console.error('Firebase 寫入失敗:', err);
         window.showToast('⚠️ 雲端同步失敗');
       });
     };
 
-    // 5. 監聽該團雲端資料
+    window.saveOrder = function(order) {
+      const orderRef = push(ordersRef);
+      const payload = { ...order, id: orderRef.key, createdAt: Date.now() };
+      return set(orderRef, payload);
+    };
+
+    window.migrateLegacyTourData = function() {
+      if (!window.state.isUnlocked) {
+        window.showToast('🔐 請先登入導遊帳號');
+        return;
+      }
+      window.openConfirmModal(
+        '🔄 遷移本團資料？',
+        '將舊版商品設定與訂單搬到分離的資料節點，並移除舊節點內的密碼欄位。請先備份 Firebase 資料，且在套用新版 Rules 前完成。',
+        async () => {
+          try {
+            const legacyRef = ref(db, tourRoot);
+            const legacySnap = await get(legacyRef);
+            const legacy = legacySnap.val() || {};
+            const publicSnap = await get(publicRef);
+            if (!publicSnap.exists() && (legacy.products || legacy.currencyCode)) {
+              await set(publicRef, {
+                currencyCode: legacy.currencyCode || 'TWD',
+                currencySymbol: legacy.currencySymbol || 'NT$',
+                exchangeRate: Number(legacy.exchangeRate) || 1,
+                roundUpTwd: Boolean(legacy.roundUpTwd),
+                products: legacy.products || [],
+                isOrderLocked: Boolean(legacy.isOrderLocked)
+              });
+            }
+            const existingOrdersSnap = await get(ordersRef);
+            const existingOrders = existingOrdersSnap.val() || {};
+            const oldOrders = Array.isArray(legacy.orders)
+              ? legacy.orders
+              : (legacy.orders ? Object.values(legacy.orders) : []);
+            const additions = {};
+            oldOrders.forEach((order, index) => {
+              if (!order) return;
+              const proposedId = String(order.id || `legacy_${index}`);
+              const key = /^[A-Za-z0-9_-]{1,100}$/.test(proposedId) ? proposedId : `legacy_${index}`;
+              const oldItems = Array.isArray(order.items) ? order.items : Object.values(order.items || {});
+              const items = oldItems.map(item => ({
+                prodId: String(item.prodId || ''),
+                name: String(item.name || '商品'),
+                qty: Number(item.qty) || 1,
+                subtotal: Number(item.subtotal) || 0
+              }));
+              if (!existingOrders[key] && !additions[key]) additions[key] = {
+                id: key,
+                name: String(order.name || '未提供姓名'),
+                seat: String(order.seat || '未提供座位'),
+                items,
+                totalAmount: Number(order.totalAmount) || 0,
+                currencySymbol: String(order.currencySymbol || legacy.currencySymbol || 'NT$'),
+                twdAmount: Number(order.twdAmount) || 0,
+                paid: Boolean(order.paid),
+                delivered: Boolean(order.delivered),
+                createdAt: Number(order.createdAt) || Date.now()
+              };
+            });
+            if (Object.keys(additions).length) await update(ordersRef, additions);
+            await update(legacyRef, {
+              currencyCode: null,
+              currencySymbol: null,
+              exchangeRate: null,
+              roundUpTwd: null,
+              products: null,
+              orders: null,
+              isOrderLocked: null,
+              guidePassword: null
+            });
+            const migratedPublicSnap = await get(publicRef);
+            const migratedOrdersSnap = await get(ordersRef);
+            const migratedPublic = migratedPublicSnap.val();
+            if (migratedPublic) {
+              window.state.currencyCode = migratedPublic.currencyCode || 'TWD';
+              window.state.currencySymbol = migratedPublic.currencySymbol || 'NT$';
+              window.state.exchangeRate = Number(migratedPublic.exchangeRate) || 1;
+              window.state.roundUpTwd = Boolean(migratedPublic.roundUpTwd);
+              window.state.products = Array.isArray(migratedPublic.products)
+                ? migratedPublic.products
+                : Object.values(migratedPublic.products || {});
+              window.state.isOrderLocked = Boolean(migratedPublic.isOrderLocked);
+            }
+            window.state.orders = Object.values(migratedOrdersSnap.val() || {}).filter(Boolean);
+            window.syncCurrencyUI();
+            window.renderAll();
+            window.showToast('✅ 本團資料遷移完成；請確認商品與訂單後再套用 Rules');
+          } catch (err) {
+            console.error('舊資料遷移失敗:', err);
+            window.showToast('⚠️ 遷移失敗；請確認舊資料仍可讀寫且 Rules 尚未切換');
+          }
+        }
+      );
+    };
+
+    window.startOrdersListener = function() {
+      if (stopOrdersListener) stopOrdersListener();
+      stopOrdersListener = onValue(ordersRef, (snapshot) => {
+        const raw = snapshot.val() || {};
+        window.state.orders = Object.values(raw).filter(Boolean);
+        window.renderAll();
+      }, (error) => {
+        console.error('訂單讀取錯誤:', error);
+        window.showToast('⚠️ 無法讀取訂單，請確認導遊帳號權限');
+      });
+    };
+
+    window.handleAuthState = async function(user) {
+      if (stopOrdersListener) { stopOrdersListener(); stopOrdersListener = null; }
+      window.state.isUnlocked = false;
+      window.state.orders = [];
+      if (!user) {
+        window.activateTabUI('member');
+        return;
+      }
+      try {
+        const roleSnap = await get(ref(db, `tourAdmins/${currentTourId}/${user.uid}`));
+        if (roleSnap.val() !== true) {
+          await signOut(auth);
+          window.showToast('⛔ 此帳號沒有本團導遊權限');
+          return;
+        }
+        window.state.isUnlocked = true;
+        window.startOrdersListener();
+        window.updateHeaderBadges();
+        window.showToast('🔓 導遊已登入');
+      } catch (err) {
+        console.error('導遊權限確認失敗:', err);
+        await signOut(auth);
+        window.showToast('⚠️ 無法確認導遊權限');
+      }
+    };
+
+    // 監聽公開資料；只有已授權導遊才會訂閱私人訂單。
     window.initApp = function() {
-      onValue(tourRef, (snapshot) => {
+      onValue(publicRef, (snapshot) => {
         const syncBadge = document.getElementById('cloudSyncBadge');
         if (syncBadge) {
           syncBadge.textContent = `☁️ 團號: ${currentTourId}`;
@@ -1041,10 +1195,6 @@
           const normalizedProducts = Array.isArray(cloudData.products)
             ? cloudData.products
             : (cloudData.products ? Object.values(cloudData.products) : []);
-          const normalizedOrders = Array.isArray(cloudData.orders)
-            ? cloudData.orders
-            : (cloudData.orders ? Object.values(cloudData.orders) : []);
-
           window.state = {
             ...window.state,
             currencyCode: cloudData.currencyCode || 'TWD',
@@ -1052,20 +1202,24 @@
             exchangeRate: cloudData.exchangeRate || 1,
             roundUpTwd: Boolean(cloudData.roundUpTwd),
             products: normalizedProducts,
-            orders: normalizedOrders,
-            isOrderLocked: Boolean(cloudData.isOrderLocked),
-            guidePassword: cloudData.guidePassword || '1234'
+            isOrderLocked: Boolean(cloudData.isOrderLocked)
           };
-        } else {
-          window.applyPresetData('tw', false);
-          window.saveState();
+        } else if (!publicDataLoaded) {
+          const preset = PRESETS.tw;
+          window.state.currencyCode = preset.code;
+          window.state.currencySymbol = preset.symbol;
+          window.state.exchangeRate = preset.rate;
+          window.state.products = JSON.parse(JSON.stringify(preset.products));
         }
+        publicDataLoaded = true;
         window.syncCurrencyUI();
         window.renderIconGrid();
         window.renderAll();
       }, (error) => {
-        console.error('Firebase 讀取錯誤:', error);
+        console.error('Firebase 公開資料讀取錯誤:', error);
+        document.getElementById('cloudSyncBadge').textContent = '⚠️ 連線失敗';
       });
+      onAuthStateChanged(auth, window.handleAuthState);
     };
 
     // 6. 多團切換、分享連結與 QR Code 產生器
@@ -1073,6 +1227,10 @@
       const newCode = document.getElementById('currentTourCodeInput').value.trim();
       if (!newCode) {
         window.showToast('⚠️ 請輸入有效的團號');
+        return;
+      }
+      if (!/^[A-Za-z0-9_-]{1,48}$/.test(newCode)) {
+        window.showToast('⚠️ 團號限 1～48 個英數字、底線或連字號');
         return;
       }
       const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?tour=' + encodeURIComponent(newCode);
@@ -1223,14 +1381,13 @@
     window.updateRatePreview = function() {
       const sym = window.state.currencySymbol;
       const twdExample = window.convertToTwd(1000).toLocaleString();
-      document.getElementById('ratePreviewBox').innerHTML =
+      document.getElementById('ratePreviewBox').textContent =
         `💡 匯率試算：當地貨幣 ${sym}1,000 元 ➔ 團員畫面將自動顯示「約合台幣 NT$ ${twdExample} 元」`;
     };
 
     // ==================== 密碼與分頁切換 ====================
     window.switchTab = function(tab) {
       if (tab === 'member') {
-        window.state.isUnlocked = false;
         window.activateTabUI('member');
         return;
       }
@@ -1257,58 +1414,68 @@
     };
 
     window.handleLockBadgeClick = function() {
-      if (window.state.isUnlocked) {
-        window.state.isUnlocked = false;
-        window.activateTabUI('member');
-        window.showToast('🔒 已手動上鎖並切回團員畫面');
-      } else {
-        window.promptPasswordModal(() => {
-          window.state.isUnlocked = true;
-          window.updateHeaderBadges();
-          window.showToast('🔓 導遊已解鎖');
+      if (auth.currentUser) {
+        signOut(auth).then(() => {
+          window.activateTabUI('member');
+          window.showToast('🔒 已登出導遊帳號');
+        }).catch(err => {
+          console.error('登出失敗:', err);
+          window.showToast('⚠️ 登出失敗');
         });
+      } else {
+        window.promptPasswordModal();
       }
     };
 
     window.promptPasswordModal = function(onSuccess) {
       const modal = document.getElementById('customModal');
-      document.getElementById('modalTitle').textContent = '🔐 請輸入導遊管理密碼';
-      document.getElementById('modalBody').textContent = '保護全車訂單與價格設定（預設密碼：1234）';
+      document.getElementById('modalTitle').textContent = '🔐 Firebase 導遊登入';
+      document.getElementById('modalBody').textContent = '請使用 Firebase Authentication 已建立的導遊 Email 與密碼。';
       document.getElementById('modalExtra').innerHTML = `
-        <input type="password" id="pwdCheckInput" placeholder="請輸入密碼" style="margin-bottom:14px;" />
+        <input type="email" id="guideEmailInput" autocomplete="username" placeholder="導遊 Email" style="margin-bottom:10px;" />
+        <input type="password" id="guidePasswordInput" autocomplete="current-password" placeholder="密碼" />
       `;
       document.getElementById('modalActions').innerHTML = `
         <button class="btn btn-outline" onclick="closeModal()">取消</button>
-        <button class="btn btn-primary" id="pwdConfirmBtn">解鎖進入</button>
+        <button class="btn btn-primary" id="guideLoginBtn">登入</button>
       `;
       modal.classList.add('open');
 
-      const input = document.getElementById('pwdCheckInput');
-      setTimeout(() => input.focus(), 100);
-
-      const verify = () => {
-        if (input.value === window.state.guidePassword) {
+      const email = document.getElementById('guideEmailInput');
+      const password = document.getElementById('guidePasswordInput');
+      setTimeout(() => email.focus(), 100);
+      const login = async () => {
+        const button = document.getElementById('guideLoginBtn');
+        button.disabled = true;
+        try {
+          await setPersistence(auth, browserSessionPersistence);
+          await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
+          const roleSnap = await get(ref(db, `tourAdmins/${currentTourId}/${auth.currentUser.uid}`));
+          if (roleSnap.val() !== true) {
+            await signOut(auth);
+            throw new Error('This account is not a guide for this tour');
+          }
+          window.state.isUnlocked = true;
+          window.startOrdersListener();
+          window.updateHeaderBadges();
           window.closeModal();
-          onSuccess();
-        } else {
-          window.showToast('❌ 密碼錯誤，請再試一次');
-          input.value = '';
-          input.focus();
+          if (onSuccess) onSuccess();
+        } catch (err) {
+          console.error('導遊登入失敗:', err);
+          window.showToast('❌ 登入失敗，請確認帳號密碼');
+          password.value = '';
+          password.focus();
+        } finally {
+          button.disabled = false;
         }
       };
-
-      document.getElementById('pwdConfirmBtn').onclick = verify;
-      input.onkeydown = (e) => { if (e.key === 'Enter') verify(); };
+      document.getElementById('guideLoginBtn').onclick = login;
+      password.onkeydown = (e) => { if (e.key === 'Enter') login(); };
     };
 
     window.toggleOrderLock = function() {
       if (!window.state.isUnlocked) {
-        window.promptPasswordModal(() => {
-          window.state.isUnlocked = true;
-          window.state.isOrderLocked = !window.state.isOrderLocked;
-          window.saveState();
-          window.renderAll();
-        });
+        window.promptPasswordModal(() => window.toggleOrderLock());
         return;
       }
       window.state.isOrderLocked = !window.state.isOrderLocked;
@@ -1321,10 +1488,10 @@
       const lockBtn = document.getElementById('lockBadgeBtn');
       if (window.state.isUnlocked) {
         lockBtn.className = 'badge-btn badge-unlock';
-        lockBtn.textContent = '🔓 導遊已解鎖(點此上鎖)';
+        lockBtn.textContent = '🔓 導遊已登入（點此登出）';
       } else {
         lockBtn.className = 'badge-btn badge-lock';
-        lockBtn.textContent = '🔒 導遊管理已上鎖';
+        lockBtn.textContent = '🔒 導遊登入';
       }
 
       const orderBtn = document.getElementById('orderLockBtn');
@@ -1391,7 +1558,7 @@
           if (saved > 0) {
             return `
               <div class="nudge-banner">
-                <span>💡 再加 <b>${need}</b> 件只要多 ${sym}${extraPay.toLocaleString()}（現省 ${sym}${saved.toLocaleString()}）！</span>
+                <span>💡 再加 <b>${need}</b> 件只要多 ${window.escapeHtml(sym)}${extraPay.toLocaleString()}（現省 ${window.escapeHtml(sym)}${saved.toLocaleString()}）！</span>
                 <button class="nudge-add-btn" onclick="changeQty('${product.id}', ${need})">＋${need} 件</button>
               </div>
             `;
@@ -1438,27 +1605,28 @@
       const isForeign = window.state.currencyCode !== 'TWD';
 
       container.innerHTML = window.state.products.map(p => {
+        if (!/^[A-Za-z0-9_-]{1,100}$/.test(String(p.id || ''))) return '';
         const qty = window.state.cart[p.id] || 0;
         const promoText = window.formatPromoLabel(p);
         const nudgeHtml = window.getPromoNudgeHtml(p, qty);
         const twdPrice = window.convertToTwd(p.price).toLocaleString();
         const mediaHtml = p.image
-          ? `<img src="${p.image}" alt="${p.name}" onclick="previewPhoto('${p.image}', '${p.name}')" />`
-          : `<span>${p.icon || '🎁'}</span>`;
+          ? `<img src="${window.escapeHtml(p.image)}" alt="${window.escapeHtml(p.name)}" data-photo-preview="true" />`
+          : `<span>${window.escapeHtml(p.icon || '🎁')}</span>`;
 
         return `
           <div class="product-card">
             <div class="product-top">
               <div class="product-media">${mediaHtml}</div>
               <div class="product-info">
-                <div class="product-name">${p.name}</div>
-                <div class="product-desc">${p.desc || ''}</div>
-                ${promoText ? `<div class="promo-tag">${promoText}</div>` : ''}
+                <div class="product-name">${window.escapeHtml(p.name)}</div>
+                <div class="product-desc">${window.escapeHtml(p.desc || '')}</div>
+                ${promoText ? `<div class="promo-tag">${window.escapeHtml(promoText)}</div>` : ''}
               </div>
             </div>
             <div class="product-bottom">
               <div>
-                <div class="price-tag">${sym} ${Number(p.price).toLocaleString()}</div>
+                <div class="price-tag">${window.escapeHtml(sym)} ${Number(p.price).toLocaleString()}</div>
                 ${isForeign ? `<div class="price-twd">約台幣 NT$ ${twdPrice}</div>` : ''}
               </div>
               <div class="qty-control">
@@ -1471,6 +1639,10 @@
           </div>
         `;
       }).join('');
+      container.onclick = (event) => {
+        const image = event.target.closest('img[data-photo-preview="true"]');
+        if (image) window.previewPhoto(image.src, image.alt);
+      };
     };
 
     window.changeQty = function(prodId, delta) {
@@ -1479,7 +1651,7 @@
         return;
       }
       const cur = window.state.cart[prodId] || 0;
-      const next = Math.max(0, cur + delta);
+      const next = Math.min(500, Math.max(0, cur + delta));
       if (next === 0) delete window.state.cart[prodId];
       else window.state.cart[prodId] = next;
 
@@ -1524,7 +1696,7 @@
       });
     };
 
-    // ==================== 結帳與同座位防重複合併機制 ====================
+    // ==================== 結帳（團員只能新增訂單） ====================
     window.openCheckoutModal = function() {
       if (window.state.isOrderLocked) {
         window.showToast('⛔ 本團已結單鎖定');
@@ -1534,7 +1706,11 @@
       const seat = document.getElementById('buyerSeat').value.trim().toUpperCase().replace(/\s+/g, '');
       document.getElementById('buyerSeat').value = seat;
 
-      if (!name || !seat) {
+      if (!name || name.length > 80 || !seat || seat.length > 16) {
+        if (name.length > 80 || seat.length > 16) {
+          window.showToast('⚠️ 姓名最多 80 字，座位最多 16 字');
+          return;
+        }
         window.showToast('⚠️ 請先填寫「姓名」與「座位號碼」');
         return;
       }
@@ -1556,117 +1732,22 @@
       }
 
       const sym = window.state.currencySymbol;
-      const existingIdx = window.state.orders.findIndex(o => (o.seat || '').toUpperCase().trim() === seat);
-
-      // 若發現同座位已有舊訂單，啟動合併 / 覆蓋選擇彈窗
-      if (existingIdx > -1) {
-        const oldOrder = window.state.orders[existingIdx];
-        const oldItems = Array.isArray(oldOrder.items) ? oldOrder.items : Object.values(oldOrder.items || {});
-        const oldListHtml = oldItems.map(i => `<div>• ${i.name} × <b>${i.qty}</b></div>`).join('');
-        const newListHtml = newItems.map(i => `<div>• ${i.name} × <b>${i.qty}</b></div>`).join('');
-
-        const modal = document.getElementById('customModal');
-        document.getElementById('modalTitle').textContent = `⚠️ 座位【${seat}】已有登記紀錄`;
-        document.getElementById('modalBody').innerHTML = `
-          <div style="margin-bottom:10px;">系統發現座位 <b>${seat}（${oldOrder.name}）</b> 之前已經送出過訂單：</div>
-          <div style="padding:10px; background:#f1f5f9; border-radius:10px; margin-bottom:10px; font-size:19px;">
-            <b>原本已登記：</b>${oldListHtml}
-          </div>
-          <div style="padding:10px; background:#fffbeb; border:1px solid #f59e0b; border-radius:10px; font-size:19px;">
-            <b>本次新選擇：</b>${newListHtml}
-          </div>
-          <div style="margin-top:10px; font-weight:800; color:#0f172a;">請問您要「合併加購」還是「覆蓋重填」？</div>
-        `;
-        document.getElementById('modalExtra').innerHTML = '';
-        document.getElementById('modalActions').innerHTML = `
-          <button class="btn btn-outline" onclick="closeModal()">取消</button>
-          <button class="btn btn-danger" id="overwriteOrderBtn">🔄 覆蓋舊單</button>
-          <button class="btn btn-success" style="grid-column:1/-1;" id="mergeOrderBtn">➕ 合併加購（自動重算優惠）</button>
-        `;
-        modal.classList.add('open');
-
-        // 選項 A：覆蓋舊單
-        document.getElementById('overwriteOrderBtn').onclick = () => {
-          window.closeModal();
-          window.state.orders[existingIdx] = {
-            id: oldOrder.id,
-            name,
-            seat,
-            items: newItems,
-            totalAmount: newTotalAmount,
-            currencySymbol: sym,
-            twdAmount: window.convertToTwd(newTotalAmount),
-            paid: false,
-            delivered: false
-          };
-          window.state.cart = {};
-          window.saveState();
-          window.renderAll();
-          window.showToast('✅ 已覆蓋更新您的訂單！');
-        };
-
-        // 選項 B：合併加購（相同商品數量相加並重新套用組合特價）
-        document.getElementById('mergeOrderBtn').onclick = () => {
-          window.closeModal();
-          const qtyMap = {};
-          oldItems.forEach(it => {
-            const matchedProd = window.state.products.find(p => p.id === it.prodId || p.name === it.name);
-            const key = matchedProd ? matchedProd.id : it.name;
-            qtyMap[key] = (qtyMap[key] || 0) + Number(it.qty);
-          });
-          newItems.forEach(it => {
-            const key = it.prodId || it.name;
-            qtyMap[key] = (qtyMap[key] || 0) + Number(it.qty);
-          });
-
-          const mergedItems = [];
-          let mergedTotal = 0;
-          Object.entries(qtyMap).forEach(([key, totalQ]) => {
-            const prod = window.state.products.find(p => p.id === key || p.name === key);
-            if (prod) {
-              const sub = window.calcItemTotal(prod, totalQ);
-              mergedItems.push({ prodId: prod.id, name: prod.name, qty: totalQ, subtotal: sub });
-              mergedTotal += sub;
-            } else {
-              mergedItems.push({ name: key, qty: totalQ, subtotal: 0 });
-            }
-          });
-
-          window.state.orders[existingIdx] = {
-            id: oldOrder.id,
-            name,
-            seat,
-            items: mergedItems,
-            totalAmount: mergedTotal,
-            currencySymbol: sym,
-            twdAmount: window.convertToTwd(mergedTotal),
-            paid: false,
-            delivered: false
-          };
-          window.state.cart = {};
-          window.saveState();
-          window.renderAll();
-          window.showToast('🎉 已合併加購並重新計算優惠！');
-        };
-        return;
-      }
 
       // 全新座位直接確認送出
       const twdStr = window.state.currencyCode !== 'TWD'
         ? `<div style="color:#047857; font-weight:900; margin-top:6px;">約合台幣：NT$ ${window.convertToTwd(newTotalAmount).toLocaleString()} 元</div>`
         : '';
 
-      const listHtml = newItems.map(i => `<div>• ${i.name} × <b>${i.qty}</b>（${sym}${i.subtotal.toLocaleString()}）</div>`).join('');
+      const listHtml = newItems.map(i => `<div>• ${window.escapeHtml(i.name)} × <b>${i.qty}</b>（${window.escapeHtml(sym)}${i.subtotal.toLocaleString()}）</div>`).join('');
 
       window.openConfirmModal(
         '📋 確認您的訂購明細',
-        `<div><b>訂購人：</b>${name}（座位：${seat}）</div>
+        `<div><b>訂購人：</b>${window.escapeHtml(name)}（座位：${window.escapeHtml(seat)}）</div>
          <div style="margin:12px 0; padding:12px; background:#f8fafc; border-radius:12px;">${listHtml}</div>
          <div style="font-size:24px; font-weight:900; color:#b45309;">總計：${sym} ${newTotalAmount.toLocaleString()}</div>
          ${twdStr}`,
         () => {
-          window.state.orders.unshift({
-            id: Date.now().toString(),
+          window.saveOrder({
             name,
             seat,
             items: newItems,
@@ -1675,11 +1756,15 @@
             twdAmount: window.convertToTwd(newTotalAmount),
             paid: false,
             delivered: false
+          }).then(() => {
+            window.state.cart = {};
+            window.renderMemberProducts();
+            window.updateBottomTotal();
+            window.showToast('🎉 登記成功！若需加購，請重新送出一筆訂單');
+          }).catch((err) => {
+            console.error('訂單送出失敗:', err);
+            window.showToast('⚠️ 訂單送出失敗，請確認網路後重試');
           });
-          window.state.cart = {};
-          window.saveState();
-          window.renderAll();
-          window.showToast('🎉 登記成功！已同步至導遊雲端總表');
         }
       );
     };
@@ -1706,12 +1791,12 @@
       } else {
         summaryEl.innerHTML = keys.map(k =>
           `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0;">
-            <span>${k}</span>
+            <span>${window.escapeHtml(k)}</span>
             <strong style="color:#b45309;">共 ${summaryMap[k]} 件</strong>
           </div>`
         ).join('') +
         `<div style="margin-top:12px; font-weight:900; color:#0f172a;">
-          全車總金額：${window.state.currencySymbol} ${grandTotal.toLocaleString()}
+          全車總金額：${window.escapeHtml(window.state.currencySymbol)} ${Number(grandTotal).toLocaleString()}
           ${window.state.currencyCode !== 'TWD' ? `（約 NT$ ${grandTwd.toLocaleString()}）` : ''}
         </div>`;
       }
@@ -1723,6 +1808,7 @@
         orderEl.innerHTML = window.state.orders.map(o => {
           const orderItems = Array.isArray(o.items) ? o.items : (o.items ? Object.values(o.items) : []);
           const allDone = o.paid && o.delivered;
+          const safeOrderId = /^[A-Za-z0-9_-]{1,100}$/.test(String(o.id || '')) ? String(o.id) : '';
           const twdNote = (window.state.currencyCode !== 'TWD' && o.twdAmount)
             ? ` <span style="font-size:18px; color:#047857;">(約 NT$${o.twdAmount.toLocaleString()})</span>`
             : '';
@@ -1730,67 +1816,77 @@
           return `
           <div class="order-item" style="border-color:${allDone ? '#16a34a' : '#cbd5e1'}; background:${allDone ? '#f0fdf4' : '#f8fafc'};">
             <div class="order-header">
-              <div class="order-buyer">💺 ${o.seat} ｜ ${o.name}</div>
+              <div class="order-buyer">💺 ${window.escapeHtml(o.seat)} ｜ ${window.escapeHtml(o.name)}</div>
             </div>
             <div class="order-status-pills">
-              <button class="btn ${o.paid ? 'btn-success' : 'btn-outline'}" style="min-height:48px; padding:6px 10px; font-size:19px;" onclick="togglePaid('${o.id}')">
+              <button class="btn ${o.paid ? 'btn-success' : 'btn-outline'}" style="min-height:48px; padding:6px 10px; font-size:19px;" data-order-action="paid" data-order-id="${window.escapeHtml(safeOrderId)}">
                 ${o.paid ? '✅ 已收款' : '⏳ 未付款'}
               </button>
-              <button class="btn ${o.delivered ? 'btn-info' : 'btn-outline'}" style="min-height:48px; padding:6px 10px; font-size:19px;" onclick="toggleDelivered('${o.id}')">
+              <button class="btn ${o.delivered ? 'btn-info' : 'btn-outline'}" style="min-height:48px; padding:6px 10px; font-size:19px;" data-order-action="delivered" data-order-id="${window.escapeHtml(safeOrderId)}">
                 ${o.delivered ? '🛍️ 已發貨' : '📦 未領貨'}
               </button>
             </div>
             <div style="margin-bottom:8px;">
-              ${orderItems.map(i => `• ${i.name} × <b>${i.qty}</b>`).join('<br>')}
+              ${orderItems.map(i => `• ${window.escapeHtml(i.name)} × <b>${Number(i.qty)}</b>`).join('<br>')}
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-              <strong style="font-size:21px; color:#b45309;">應收：${o.currencySymbol} ${o.totalAmount.toLocaleString()}${twdNote}</strong>
-              <button class="btn btn-danger" style="width:auto; min-height:44px; padding:6px 12px;" onclick="deleteOrder('${o.id}')">刪除</button>
+              <strong style="font-size:21px; color:#b45309;">應收：${window.escapeHtml(o.currencySymbol)} ${Number(o.totalAmount).toLocaleString()}${twdNote}</strong>
+              <button class="btn btn-danger" style="width:auto; min-height:44px; padding:6px 12px;" data-order-action="delete" data-order-id="${window.escapeHtml(safeOrderId)}">刪除</button>
             </div>
           </div>
         `;
         }).join('');
       }
+      orderEl.onclick = (event) => {
+        const button = event.target.closest('button[data-order-action]');
+        if (!button || !button.dataset.orderId) return;
+        const { orderAction, orderId } = button.dataset;
+        if (orderAction === 'paid') window.togglePaid(orderId);
+        else if (orderAction === 'delivered') window.toggleDelivered(orderId);
+        else if (orderAction === 'delete') window.deleteOrder(orderId);
+      };
     };
 
     window.togglePaid = function(orderId) {
       const target = window.state.orders.find(o => o.id === orderId);
-      if (target) {
-        target.paid = !target.paid;
-        window.saveState();
-        window.renderGuideDashboard();
+      if (target && window.state.isUnlocked) {
+        update(ref(db, `${tourRoot}/privateOrders/${orderId}`), { paid: !target.paid })
+          .catch(err => { console.error(err); window.showToast('⚠️ 更新收款狀態失敗'); });
       }
     };
 
     window.toggleDelivered = function(orderId) {
       const target = window.state.orders.find(o => o.id === orderId);
-      if (target) {
-        target.delivered = !target.delivered;
-        window.saveState();
-        window.renderGuideDashboard();
+      if (target && window.state.isUnlocked) {
+        update(ref(db, `${tourRoot}/privateOrders/${orderId}`), { delivered: !target.delivered })
+          .catch(err => { console.error(err); window.showToast('⚠️ 更新領貨狀態失敗'); });
       }
     };
 
     window.deleteOrder = function(orderId) {
       window.openConfirmModal('🗑️ 刪除這筆訂單？', '刪除後無法復原，確定要刪除嗎？', () => {
-        window.state.orders = window.state.orders.filter(o => o.id !== orderId);
-        window.saveState();
-        window.renderAll();
-        window.showToast('已刪除該筆訂單');
+        if (!window.state.isUnlocked) return;
+        remove(ref(db, `${tourRoot}/privateOrders/${orderId}`))
+          .then(() => window.showToast('已刪除該筆訂單'))
+          .catch(err => { console.error(err); window.showToast('⚠️ 刪除訂單失敗'); });
       });
     };
 
     window.confirmClearAllOrders = function() {
       if (window.state.orders.length === 0) return;
       window.openConfirmModal('⚠️ 清空全車所有訂單？', '這會清除目前所有團員的登記紀錄，確定要清空嗎？', () => {
-        window.state.orders = [];
-        window.saveState();
-        window.renderAll();
-        window.showToast('已清空所有訂單');
+        if (!window.state.isUnlocked) return;
+        remove(ordersRef)
+          .then(() => window.showToast('已清空所有訂單'))
+          .catch(err => { console.error(err); window.showToast('⚠️ 清空訂單失敗'); });
       });
     };
 
     window.copySummaryToClipboard = function() {
+      if (!window.state.isUnlocked) {
+        window.showToast('🔐 請先登入導遊帳號');
+        return;
+      }
       if (window.state.orders.length === 0) {
         window.showToast('目前沒有訂單可複製');
         return;
@@ -1876,7 +1972,7 @@
       const promoY = parseFloat(document.getElementById('prodPromoY').value) || 0;
       const editId = document.getElementById('editProductId').value;
 
-      if (!name || isNaN(price) || price <= 0) {
+        if (!name || name.length > 120 || isNaN(price) || price <= 0) {
         window.showToast('⚠️ 請輸入正確的商品名稱與單價');
         return;
       }
@@ -1954,18 +2050,21 @@
 
     window.renderAdminProducts = function() {
       const el = document.getElementById('adminProductList');
-      el.innerHTML = window.state.products.map(p => `
+      el.innerHTML = window.state.products.map(p => {
+        if (!/^[A-Za-z0-9_-]{1,100}$/.test(String(p.id || ''))) return '';
+        return `
         <div class="order-item">
           <div style="font-weight:900; font-size:22px; margin-bottom:4px;">
-            ${p.icon || '🎁'} ${p.name}（${window.state.currencySymbol}${p.price}）
+            ${window.escapeHtml(p.icon || '🎁')} ${window.escapeHtml(p.name)}（${window.escapeHtml(window.state.currencySymbol)}${Number(p.price).toLocaleString()}）
           </div>
-          <div style="color:#b91c1c; font-weight:800; margin-bottom:10px;">${window.formatPromoLabel(p) || '無組合優惠'}</div>
+          <div style="color:#b91c1c; font-weight:800; margin-bottom:10px;">${window.escapeHtml(window.formatPromoLabel(p) || '無組合優惠')}</div>
           <div class="btn-row">
             <button class="btn btn-outline" style="min-height:48px;" onclick="editProduct('${p.id}')">✏️ 編輯</button>
             <button class="btn btn-danger" style="min-height:48px;" onclick="deleteProduct('${p.id}')">🗑️ 刪除</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     };
 
     window.confirmApplyPreset = function(key) {
@@ -1983,7 +2082,7 @@
       window.state.products = JSON.parse(JSON.stringify(preset.products));
       window.state.cart = {};
       window.syncCurrencyUI();
-      window.saveState();
+      if (window.state.isUnlocked) window.saveState();
       window.renderAll();
       if (triggerRateFetch && preset.code !== 'TWD') {
         window.fetchLiveExchangeRate();
@@ -1991,15 +2090,22 @@
     };
 
     window.changeGuidePassword = function() {
-      const newPwd = document.getElementById('newPasswordInput').value.trim();
-      if (newPwd.length < 4 || newPwd.length > 8) {
-        window.showToast('⚠️ 請輸入 4 到 8 碼的新密碼');
+      if (!auth.currentUser) {
+        window.showToast('🔐 請先登入導遊帳號');
         return;
       }
-      window.state.guidePassword = newPwd;
-      document.getElementById('newPasswordInput').value = '';
-      window.saveState();
-      window.showToast('🔑 導遊管理密碼已更新！');
+      const newPwd = document.getElementById('newPasswordInput').value;
+      if (newPwd.length < 6) {
+        window.showToast('⚠️ 新密碼至少需要 6 個字元');
+        return;
+      }
+      updatePassword(auth.currentUser, newPwd).then(() => {
+        document.getElementById('newPasswordInput').value = '';
+        window.showToast('🔑 Firebase 登入密碼已更新');
+      }).catch(err => {
+        console.error('更新密碼失敗:', err);
+        window.showToast('⚠️ 更新失敗，請重新登入後再試');
+      });
     };
 
     window.openConfirmModal = function(title, bodyHtml, onConfirm) {
@@ -2021,7 +2127,7 @@
     window.previewPhoto = function(src, title) {
       const modal = document.getElementById('customModal');
       document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalBody').innerHTML = `<img src="${src}" style="width:100%; border-radius:14px;" />`;
+      document.getElementById('modalBody').innerHTML = `<img src="${window.escapeHtml(src)}" alt="${window.escapeHtml(title)}" style="width:100%; border-radius:14px;" />`;
       document.getElementById('modalExtra').innerHTML = '';
       document.getElementById('modalActions').innerHTML = `<button class="btn btn-primary" style="grid-column:1/-1;" onclick="closeModal()">關閉預覽</button>`;
       modal.classList.add('open');
