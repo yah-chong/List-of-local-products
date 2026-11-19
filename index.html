@@ -982,6 +982,7 @@
     const publicRef = ref(db, `${tourRoot}/public`);
     const ordersRef = ref(db, `${tourRoot}/privateOrders`);
     let stopOrdersListener = null;
+    let stopPublicListener = null;
     let publicDataLoaded = false;
 
     // 3. 狀態與預設資料
@@ -1171,6 +1172,7 @@
           return;
         }
         window.state.isUnlocked = true;
+        window.startPublicListener();
         window.startOrdersListener();
         window.updateHeaderBadges();
         window.showToast('🔓 導遊已登入');
@@ -1182,8 +1184,9 @@
     };
 
     // 監聽公開資料；只有已授權導遊才會訂閱私人訂單。
-    window.initApp = function() {
-      onValue(publicRef, (snapshot) => {
+    window.startPublicListener = function() {
+      if (stopPublicListener) stopPublicListener();
+      stopPublicListener = onValue(publicRef, (snapshot) => {
         const syncBadge = document.getElementById('cloudSyncBadge');
         if (syncBadge) {
           syncBadge.textContent = `☁️ 團號: ${currentTourId}`;
@@ -1218,8 +1221,13 @@
         window.renderAll();
       }, (error) => {
         console.error('Firebase 公開資料讀取錯誤:', error);
-        document.getElementById('cloudSyncBadge').textContent = '⚠️ 連線失敗';
+        const badge = document.getElementById('cloudSyncBadge');
+        if (badge) badge.textContent = auth.currentUser ? '⚠️ 連線失敗' : '🔒 登入後載入團務資料';
       });
+    };
+
+    window.initApp = function() {
+      window.startPublicListener();
       onAuthStateChanged(auth, window.handleAuthState);
     };
 
@@ -1457,6 +1465,7 @@
             throw new Error('This account is not a guide for this tour');
           }
           window.state.isUnlocked = true;
+          window.startPublicListener();
           window.startOrdersListener();
           window.updateHeaderBadges();
           window.closeModal();
@@ -2143,6 +2152,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
