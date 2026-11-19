@@ -966,7 +966,10 @@
     // 2. 從網址動態讀取 ?tour= 團號（無參數時預設為 'default_tour'）
     const urlParams = new URLSearchParams(window.location.search);
     const requestedTourId = (urlParams.get('tour') || 'default_tour').trim();
-    const currentTourId = /^[A-Za-z0-9_-]{1,48}$/.test(requestedTourId) ? requestedTourId : 'default_tour';
+    // Realtime Database supports UTF-8 keys, including Chinese, with a limited set of forbidden characters.
+    const isValidTourId = (value) => [...value].length > 0 && [...value].length <= 48
+      && !/[.#$\[\]\/\x00-\x1F\x7F]/u.test(value);
+    const currentTourId = isValidTourId(requestedTourId) ? requestedTourId : 'default_tour';
     window.escapeHtml = function(value) {
       return String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -1238,8 +1241,8 @@
         window.showToast('⚠️ 請輸入有效的團號');
         return;
       }
-      if (!/^[A-Za-z0-9_-]{1,48}$/.test(newCode)) {
-        window.showToast('⚠️ 團號限 1～48 個英數字、底線或連字號');
+      if (!isValidTourId(newCode)) {
+        window.showToast('⚠️ 團號需為 1～48 個字元，且不可包含 . $ # [ ] / 或控制字元');
         return;
       }
       const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?tour=' + encodeURIComponent(newCode);
@@ -2152,6 +2155,7 @@
   </script>
 </body>
 </html>
+
 
 
 
